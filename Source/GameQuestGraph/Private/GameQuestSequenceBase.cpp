@@ -15,6 +15,7 @@ namespace Context
 	uint16 CurrentFinishedBranchId;
 	FSequenceIdList CurrentNextSequenceIds;
 	FName PreFinishedTagName;
+	bool bIsFirstStack = true;
 }
 
 void FGameQuestSequenceBase::TryActivateSequence()
@@ -169,17 +170,16 @@ template<typename TFunc>
 void FGameQuestSequenceBase::ExecuteFinishEvent(UFunction* FinishEvent, const TFunc& LinkNextSequenceFunc)
 {
 	using namespace Context;
-	static bool bIsFirstStack = true;
 	bool bNextSequenceActivated = false;
 	bool bNextHasInterrupted = false;
 	const uint16 SequenceId = OwnerQuest->GetSequenceId(this);
 	TGuardValue FinishedSequenceGuard{ CurrentFinishedSequenceId, SequenceId };
 	if (FinishEvent)
 	{
-		TGuardValue bIsFirstStackGuard{ bIsFirstStack, false };
 		FSequenceIdList& NextSequenceList = CurrentNextSequenceIds;
 		TGuardValue NextSequencesGuard{ NextSequenceList, FSequenceIdList{} };
 
+		TGuardValue bIsFirstStackGuard{ bIsFirstStack, false };
 		OwnerQuest->ProcessEvent(FinishEvent, nullptr);
 
 		if (NextSequenceList.Num() > 0)
