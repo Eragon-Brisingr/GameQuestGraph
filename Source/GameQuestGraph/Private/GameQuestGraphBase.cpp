@@ -271,19 +271,26 @@ struct FInterruptNextActivateSequence
 		if (Sequence.bIsActivated)
 		{
 			Sequence.InterruptSequence();
-			return;
 		}
-		for (const uint16 NextSequenceId : Sequence.GetNextSequences())
+		const TArray<uint16> NextSequences = Sequence.GetNextSequences();
+		if (NextSequences.Num() > 0)
 		{
-			FGameQuestSequenceBase* NextSequence = Quest.GetSequencePtr(NextSequenceId);
-			if (NextSequence->PreSequence != SequenceId)
+			for (const uint16 NextSequenceId : NextSequences)
 			{
-				continue;
+				FGameQuestSequenceBase* NextSequence = Quest.GetSequencePtr(NextSequenceId);
+				if (NextSequence->PreSequence != SequenceId)
+				{
+					continue;
+				}
+				if (NextSequence->bInterrupted == false)
+				{
+					Do(*NextSequence, Quest.GetSequenceId(NextSequence));
+				}
 			}
-			if (NextSequence->bInterrupted == false)
-			{
-				Do(*NextSequence, Quest.GetSequenceId(NextSequence));
-			}
+		}
+		else if (Sequence.bInterrupted == false)
+		{
+			Sequence.InterruptSequence();
 		}
 	}
 };
@@ -751,7 +758,7 @@ DEFINE_FUNCTION(UGameQuestGraphBase::execCallNodeRepFunction)
 	P_NATIVE_END;
 }
 
-TArray<Context::FSequenceIdList> StartCachedSequenceIdList;
+TArray<Context::FAddNextSequenceIdFunc> StartCachedAddNextSequenceIdFuncList;
 
 bool UGameQuestGraphBase::TryStartGameQuest()
 {
@@ -763,8 +770,14 @@ bool UGameQuestGraphBase::TryStartGameQuest()
 
 	UE_LOG(LogGameQuest, Verbose, TEXT("StartGameQuest %s"), *GetName());
 	bIsActivated = true;
-	StartCachedSequenceIdList.Push(Context::CurrentNextSequenceIds);
-	Context::CurrentNextSequenceIds.Empty();
+
+	StartCachedAddNextSequenceIdFuncList.Push(MoveTemp(Context::AddNextSequenceIdFunc));
+	Context::AddNextSequenceIdFunc = [this](const uint16 SequenceId)
+	{
+		StartSequences.Add(SequenceId);
+		MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, StartSequences, this);
+	};
+
 	if (UGameQuestComponent* OwnerComp = Cast<UGameQuestComponent>(Owner))
 	{
 		OwnerComp->StartQuest(this);
@@ -774,17 +787,17 @@ bool UGameQuestGraphBase::TryStartGameQuest()
 
 void UGameQuestGraphBase::PostExecuteEntryEvent()
 {
-	ensure(Context::CurrentNextSequenceIds.Num() > 0);
-	for (const auto& [Sequence, Id] : Context::CurrentNextSequenceIds)
+	ensure(StartSequences.Num() > 0);
+	for (const uint16 SequenceId : StartSequences)
 	{
-		StartSequences.Add(Id);
+		FGameQuestSequenceBase* Sequence = GetSequencePtr(SequenceId);
+		if (Sequence->bInterrupted)
+		{
+			continue;
+		}
+		Sequence->ActivateSequence(SequenceId);
 	}
-	MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, StartSequences, this);
-	for (const auto& [Sequence, Id] : Context::CurrentNextSequenceIds)
-	{
-		Sequence->ActivateSequence(Id);
-	}
-	Context::CurrentNextSequenceIds = StartCachedSequenceIdList.Pop();
+	Context::AddNextSequenceIdFunc = StartCachedAddNextSequenceIdFuncList.Pop();
 }
 
 void UGameQuestGraphBase::ProcessFinishedTag(FName FinishedTagName, FGameQuestFinishedTag& FinishedTag)

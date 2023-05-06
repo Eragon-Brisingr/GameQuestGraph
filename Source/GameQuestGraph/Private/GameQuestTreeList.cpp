@@ -33,7 +33,7 @@ namespace GameQuest
 				return;
 			}
 			const UGameQuestGraphBase* Quest = TreeList->GetGameQuest();
-			if (SequenceList == nullptr && SequenceIds.Num() == 1)
+			if (SequenceList == nullptr && SequenceIds.Num() == 1 && ManagedSequences.Num() == 0)
 			{
 				const uint16 SequenceId = SequenceIds[0];
 				FGameQuestSequenceBase* Sequence = Quest->GetSequencePtr(SequenceId);

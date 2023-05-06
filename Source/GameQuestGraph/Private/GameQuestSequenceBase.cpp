@@ -13,9 +13,8 @@ namespace Context
 	// For finish quest element context
 	uint16 CurrentFinishedSequenceId;
 	uint16 CurrentFinishedBranchId;
-	FSequenceIdList CurrentNextSequenceIds;
+	FAddNextSequenceIdFunc AddNextSequenceIdFunc;
 	FName PreFinishedTagName;
-	bool bIsFirstStack = true;
 }
 
 void FGameQuestSequenceBase::TryActivateSequence()
@@ -24,22 +23,16 @@ void FGameQuestSequenceBase::TryActivateSequence()
 
 	using namespace Context;
 	const uint16 SequenceId = OwnerQuest->GetSequenceId(this);
+
 	if (GetSequenceState() != EState::Deactivated)
 	{
-		CurrentNextSequenceIds.AddUnique({ this, SequenceId });
-		return;
+		AddNextSequenceIdFunc(SequenceId);
 	}
-
-	if (CurrentFinishedSequenceId != GameQuest::IdNone)
+	else if (CurrentFinishedSequenceId != GameQuest::IdNone)
 	{
 		PreSequence = CurrentFinishedSequenceId;
-		CurrentNextSequenceIds.AddUnique({ this, SequenceId });
 	}
-	else
-	{
-		check(OwnerQuest->StartSequences.Num() == 0);
-		CurrentNextSequenceIds.AddUnique({ this, SequenceId });
-	}
+	AddNextSequenceIdFunc(SequenceId);
 }
 
 void FGameQuestSequenceBase::ActivateSequence(uint16 SequenceId)
@@ -70,6 +63,7 @@ void FGameQuestSequenceBase::ActivateSequenceImpl(uint16 SequenceId)
 #endif
 
 	check(bIsActivated == false);
+	check(bInterrupted == false);
 	bIsActivated = true;
 	if constexpr (bHasAuthority)
 	{
@@ -166,34 +160,30 @@ FGameQuestSequenceBase::EState FGameQuestSequenceBase::GetSequenceState() const
 	return EState::Finished;
 }
 
-template<typename TFunc>
-void FGameQuestSequenceBase::ExecuteFinishEvent(UFunction* FinishEvent, const TFunc& LinkNextSequenceFunc)
+void FGameQuestSequenceBase::ExecuteFinishEvent(UFunction* FinishEvent, const TArray<uint16>& NextSequenceIds) const
 {
 	using namespace Context;
+	static bool bIsFirstStack = true;
 	bool bNextSequenceActivated = false;
 	bool bNextHasInterrupted = false;
 	const uint16 SequenceId = OwnerQuest->GetSequenceId(this);
 	TGuardValue FinishedSequenceGuard{ CurrentFinishedSequenceId, SequenceId };
 	if (FinishEvent)
 	{
-		FSequenceIdList& NextSequenceList = CurrentNextSequenceIds;
-		TGuardValue NextSequencesGuard{ NextSequenceList, FSequenceIdList{} };
-
 		TGuardValue bIsFirstStackGuard{ bIsFirstStack, false };
 		OwnerQuest->ProcessEvent(FinishEvent, nullptr);
 
-		if (NextSequenceList.Num() > 0)
+		for (const uint16 NextSequenceId : NextSequenceIds)
 		{
-			LinkNextSequenceFunc(NextSequenceList);
-
-			for (const FSequenceId& NextSequence : NextSequenceList)
+			FGameQuestSequenceBase* NextSequence = OwnerQuest->GetSequencePtr(NextSequenceId);
+			if (NextSequence->bInterrupted)
 			{
-				bNextHasInterrupted |= NextSequence.Sequence->bInterrupted;
-				if (NextSequence.Sequence->PreSequence == SequenceId)
-				{
-					NextSequence.Sequence->ActivateSequence(NextSequence.Id);
-					bNextSequenceActivated |= NextSequence.Sequence->bIsActivated;
-				}
+				bNextHasInterrupted |= true;
+			}
+			else if (NextSequence->PreSequence == SequenceId)
+			{
+				NextSequence->ActivateSequence(NextSequenceId);
+				bNextSequenceActivated |= NextSequence->bIsActivated;
 			}
 		}
 	}
@@ -261,18 +251,12 @@ void FGameQuestSequenceSingle::WhenSequenceDeactivated(bool bHasAuthority)
 void FGameQuestSequenceSingle::WhenElementFinished(FGameQuestElementBase* FinishedElement, const FGameQuestFinishEvent& OnElementFinishedEvent)
 {
 	DeactivateSequence(OwnerQuest->GetSequenceId(this));
-	ExecuteFinishEvent(OnElementFinishedEvent.Event, [this](const Context::FSequenceIdList& InNextSequences)
+	TGuardValue<Context::FAddNextSequenceIdFunc> AddNextSequenceIdFuncGuard{ Context::AddNextSequenceIdFunc, [this](const uint16 SequenceId)
 	{
-		if (InNextSequences.Num() == 0)
-		{
-			return;
-		}
-		for (const Context::FSequenceId& SequenceId : InNextSequences)
-		{
-			NextSequences.Add(SequenceId.Id);
-		}
+		NextSequences.Add(SequenceId);
 		MarkNodeNetDirty();
-	});
+	}};
+	ExecuteFinishEvent(OnElementFinishedEvent.Event, NextSequences);
 }
 
 void FGameQuestSequenceList::WhenQuestInitProperties(const FStructProperty* Property)
@@ -312,18 +296,12 @@ void FGameQuestSequenceList::WhenElementFinished(FGameQuestElementBase* Finished
 	if (CanFinishListElements(Elements, *OwnerQuest->GetLogicList(this)))
 	{
 		DeactivateSequence(OwnerQuest->GetSequenceId(this));
-		ExecuteFinishEvent(OnSequenceFinished, [this](const Context::FSequenceIdList& InNextSequences)
+		TGuardValue<Context::FAddNextSequenceIdFunc> AddNextSequenceIdFuncGuard{ Context::AddNextSequenceIdFunc, [this](const uint16 SequenceId)
 		{
-			if (InNextSequences.Num() == 0)
-			{
-				return;
-			}
-			for (const Context::FSequenceId& SequenceId : InNextSequences)
-			{
-				NextSequences.Add(SequenceId.Id);
-			}
+			NextSequences.Add(SequenceId);
 			MarkNodeNetDirty();
-		});
+		}};
+		ExecuteFinishEvent(OnSequenceFinished, NextSequences);
 	}
 }
 
@@ -383,23 +361,16 @@ void FGameQuestSequenceBranch::WhenElementFinished(FGameQuestElementBase* Finish
 	}
 	else if (FGameQuestSequenceBranchElement* Branch = Branches.FindByPredicate([&](const FGameQuestSequenceBranchElement& E) { return E.Element == FinishedElementId; }))
 	{
-		auto LinkNextSequenceFunc = [&](const Context::FSequenceIdList& InNextSequences)
-		{
-			if (InNextSequences.Num() == 0)
-			{
-				return;
-			}
-			for (const Context::FSequenceId& SequenceId : InNextSequences)
-			{
-				Branch->NextSequences.Add(SequenceId.Id);
-			}
-			MarkNodeNetDirty();
-		};
 		TGuardValue CurrentFinishedBranchIdGuard{ Context::CurrentFinishedBranchId, FinishedElementId };
+		TGuardValue<Context::FAddNextSequenceIdFunc> AddNextSequenceIdFuncGuard{ Context::AddNextSequenceIdFunc, [this, Branch](const uint16 SequenceId)
+		{
+			Branch->NextSequences.Add(SequenceId);
+			MarkNodeNetDirty();
+		}};
 		if (Branch->bAutoDeactivateOtherBranch)
 		{
 			DeactivateSequence(OwnerQuest->GetSequenceId(this));
-			ExecuteFinishEvent(OnElementFinishedEvent.Event, LinkNextSequenceFunc);
+			ExecuteFinishEvent(OnElementFinishedEvent.Event, Branch->NextSequences);
 		}
 		else
 		{
@@ -411,12 +382,12 @@ void FGameQuestSequenceBranch::WhenElementFinished(FGameQuestElementBase* Finish
 #endif
 				FGameQuestElementBase* Element = OwnerQuest->GetElementPtr(Branch->Element);
 				Element->DeactivateElement(true);
-				ExecuteFinishEvent(OnElementFinishedEvent.Event, LinkNextSequenceFunc);
+				ExecuteFinishEvent(OnElementFinishedEvent.Event, Branch->NextSequences);
 			}
 			else
 			{
 				DeactivateSequence(OwnerQuest->GetSequenceId(this));
-				ExecuteFinishEvent(OnElementFinishedEvent.Event, LinkNextSequenceFunc);
+				ExecuteFinishEvent(OnElementFinishedEvent.Event, Branch->NextSequences);
 			}
 		}
 	}
@@ -546,10 +517,9 @@ void FGameQuestSequenceSubQuest::WhenSequenceActivated(bool bHasAuthority)
 			SubQuestInstance->OwnerNode = this;
 			SubQuestInstance->BindingFinishedTags();
 			using namespace Context;
+			GetEvaluateGraphExposedInputs(bHasAuthority);
 			TGuardValue FinishedSequenceGuard{ CurrentFinishedSequenceId, GameQuest::IdNone };
 			TGuardValue CurrentFinishedBranchIdGuard{ Context::CurrentFinishedBranchId, GameQuest::IdNone };
-			TGuardValue NextSequencesGuard{ CurrentNextSequenceIds, FSequenceIdList{} };
-			GetEvaluateGraphExposedInputs(bHasAuthority);
 			SubQuestInstance->DefaultEntry();
 			MarkNodeNetDirty();
 		};
@@ -618,17 +588,12 @@ void FGameQuestSequenceSubQuest::ProcessFinishedTag(const FName& FinishedTagName
 	UE_LOG(LogGameQuest, Verbose, TEXT("SubQuestProcessFinishedTag %s.%s.%s"), *GetNodeName().ToString(), *SubQuestInstance->GetName(), *FinishedTagName.ToString());
 	FGameQuestSequenceSubQuestFinishedTag& SubQuestFinishedTag = FinishedTags.Add_GetRef({ FinishedTagName, FinishedTag.PreSequenceId, FinishedTag.PreBranchId, Context::PreFinishedTagName });
 	TGuardValue PreFinishedTagNameGuard{ Context::PreFinishedTagName, FinishedTagName };
-	ExecuteFinishEvent(FinishedTag.Event, [this, &SubQuestFinishedTag](const Context::FSequenceIdList& InNextSequences)
+	TGuardValue<Context::FAddNextSequenceIdFunc> AddNextSequenceIdFuncGuard{ Context::AddNextSequenceIdFunc, [this, &SubQuestFinishedTag](const uint16 SequenceId)
 	{
-		if (InNextSequences.Num() == 0)
-		{
-			return;
-		}
-		for (const Context::FSequenceId& SequenceId : InNextSequences)
-		{
-			SubQuestFinishedTag.NextSequences.Add(SequenceId.Id);
-		}
-	});
+		SubQuestFinishedTag.NextSequences.Add(SequenceId);
+		MarkNodeNetDirty();
+	}};
+	ExecuteFinishEvent(FinishedTag.Event, SubQuestFinishedTag.NextSequences);
 	MarkNodeNetDirty();
 }
 

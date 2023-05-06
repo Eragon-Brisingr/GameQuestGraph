@@ -11,21 +11,11 @@ struct FGameQuestSequenceBase;
 
 namespace Context
 {
-	struct FSequenceId
-	{
-		FGameQuestSequenceBase* Sequence;
-		const uint16 Id;
-
-		friend bool operator==(const FSequenceId& LHS, const FSequenceId& RHS)
-		{
-			return LHS.Id == RHS.Id;
-		}
-	};
-	using FSequenceIdList = TArray<FSequenceId, TInlineAllocator<2>>;
-
 	extern uint16 CurrentFinishedSequenceId;
 	extern uint16 CurrentFinishedBranchId;
-	extern FSequenceIdList CurrentNextSequenceIds;
+
+	using FAddNextSequenceIdFunc = TFunction<void(uint16)>;
+	extern FAddNextSequenceIdFunc AddNextSequenceIdFunc;
 }
 
 USTRUCT(meta = (Hidden))
@@ -84,8 +74,7 @@ protected:
 	virtual void WhenElementFinished(FGameQuestElementBase* FinishedElement, const FGameQuestFinishEvent& OnElementFinishedEvent) { unimplemented(); }
 	virtual void WhenElementUnfinished(FGameQuestElementBase* FinishedElement) { unimplemented(); }
 
-	template<typename TFunc>
-	void ExecuteFinishEvent(UFunction* FinishEvent, const TFunc& LinkNextSequenceFunc);
+	void ExecuteFinishEvent(UFunction* FinishEvent, const TArray<uint16>& NextSequenceIds) const;
 	bool CanFinishListElements(const TArray<uint16>& Elements, const GameQuest::FLogicList& ElementLogics) const;
 };
 
