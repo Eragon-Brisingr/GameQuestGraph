@@ -409,6 +409,17 @@ void FGameQuestElementBranchList::WhenForceFinishElement(const FName& EventName)
 	}
 }
 
+UGameQuestElementScriptable::UGameQuestElementScriptable(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
+#if WITH_EDITORONLY_DATA
+	, SupportType(UGameQuestGraphBase::StaticClass())
+#endif
+	, bTickable(false)
+	, bLocalJudgment(false)
+{
+
+}
+
 UWorld* UGameQuestElementScriptable::GetWorld() const
 {
 	if (Owner == nullptr)
@@ -462,6 +473,19 @@ bool UGameQuestElementScriptable::CallRemoteFunction(UFunction* Function, void* 
 	return bProcessed;
 }
 
+void UGameQuestElementScriptable::GetAssetRegistryTags(TArray<FAssetRegistryTag>& OutTags) const
+{
+	Super::GetAssetRegistryTags(OutTags);
+
+#if WITH_EDITOR
+	if (IsRunningCookCommandlet() == false)
+	{
+		static const FName SupportTypeTagName = TEXT("SupportType");
+		OutTags.Add(FAssetRegistryTag(SupportTypeTagName, SupportType.ToString(), FAssetRegistryTag::TT_Alphabetical));
+	}
+#endif
+}
+
 void UGameQuestElementScriptable::WhenElementActivated_Implementation() {}
 void UGameQuestElementScriptable::WhenElementDeactivated_Implementation() {}
 void UGameQuestElementScriptable::WhenPostElementActivated_Implementation() {}
@@ -475,6 +499,15 @@ void FGameQuestElementScript::WhenQuestInitProperties(const FStructProperty* Pro
 	if (Instance)
 	{
 		Instance->Owner = this;
+
+		const UClass* QuestClass = OwnerQuest->GetClass();
+		for (TFieldIterator<FStructProperty> It{ Instance->GetClass() }; It; ++It)
+		{
+			if (It->Struct->IsChildOf(FGameQuestFinishEvent::StaticStruct()))
+			{
+				It->ContainerPtrToValuePtr<FGameQuestFinishEvent>(Instance)->Event = QuestClass->FindFunctionByName(FGameQuestFinishEvent::MakeEventName(Property->GetFName(), It->GetFName()));
+			}
+		}
 	}
 }
 
@@ -549,5 +582,10 @@ void FGameQuestElementScript::GatherDependencies(TSet<TWeakObjectPtr<UBlueprint>
 			Blueprint->GatherDependencies(InDependencies);
 		}
 	}
+}
+
+TSubclassOf<UGameQuestGraphBase> FGameQuestElementScript::GetSupportQuestGraph() const
+{
+	return Instance ? Instance->SupportType.Get() : nullptr;
 }
 #endif

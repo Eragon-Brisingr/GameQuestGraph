@@ -204,7 +204,7 @@ void FGameQuestClassCollector::ForEachDerivedClasses(const TSubclassOf<UGameQues
 		{
 			continue;
 		}
-		const TSoftClassPtr<UGameQuestGraphBase>& SupportInstanceSoftPath = UGameQuestGraphBase::StaticClass(); // DerivedClass->GetDefaultObject<UGameQuestElementScriptable>()->SupportType;
+		const TSoftClassPtr<UGameQuestGraphBase>& SupportInstanceSoftPath = DerivedClass->GetDefaultObject<UGameQuestElementScriptable>()->SupportType;
 		LoadedClassFunc(DerivedClass, SupportInstanceSoftPath);
 	}
 
@@ -249,11 +249,16 @@ void FGameQuestClassCollector::ForEachDerivedClasses(const TSubclassOf<UGameQues
 				}
 			}
 
-			TSoftClassPtr<UGameQuestGraphBase> SupportType = UGameQuestGraphBase::StaticClass();
+			TSoftClassPtr<UGameQuestGraphBase> SupportType;
 			FString SupportTypePath;
-			if (AssetData.GetTagValue(TEXT("SupportType"), SupportTypePath))
+			static const FName SupportTypeTagName = TEXT("SupportType");
+			if (AssetData.GetTagValue(SupportTypeTagName, SupportTypePath))
 			{
 				SupportType = FSoftClassPath{ SupportTypePath };
+			}
+			else
+			{
+				SupportType = UGameQuestGraphBase::StaticClass();
 			}
 
 			UnloadedClassFunc(ClassSoftPath, SupportType);

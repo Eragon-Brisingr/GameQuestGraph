@@ -404,8 +404,8 @@ protected:
 		{
 			return;
 		}
-		const UClass* Class = Blueprint->GeneratedClass;
-		if (ensure(Class) == false)
+		const UClass* QuestClass = Blueprint->GeneratedClass;
+		if (ensure(QuestClass) == false)
 		{
 			return;
 		}
@@ -470,7 +470,7 @@ protected:
 			}
 
 			const TSubclassOf<UGameQuestGraphBase> SupportType = StructDefaultValue.Get<FGameQuestElementBase>().GetSupportQuestGraph();
-			if (Class->IsChildOf(SupportType) == false)
+			if (QuestClass->IsChildOf(SupportType) == false)
 			{
 				continue;
 			}
@@ -525,14 +525,24 @@ protected:
 			}
 		};
 		FGameQuestClassCollector::Get().ForEachDerivedClasses(UGameQuestElementScriptable::StaticClass(),
-		[&](const TSubclassOf<UGameQuestElementScriptable>& Class, const TSoftClassPtr<UGameQuestGraphBase>&)
+		[&](const TSubclassOf<UGameQuestElementScriptable>& Class, const TSoftClassPtr<UGameQuestGraphBase>& SupportType)
 		{
+			const UClass* SupportClass = SupportType.Get();
+			if (SupportClass == nullptr || QuestClass->IsChildOf(SupportClass) == false)
+			{
+				return;
+			}
 			const FText Category = Class->GetMetaDataText(TEXT("Category"), TEXT("UObjectCategory"), Class->GetFullGroupName(false));
 			const TSharedPtr<FNewClassElement_SchemaAction> NewNodeAction = MakeShared<FNewClassElement_SchemaAction>(Category, Class->GetDisplayNameText(), Class->GetToolTipText(), 0, GameQuestListNode, TSoftClassPtr<UGameQuestElementScriptable>{ Class });
 			ContextMenuBuilder.AddAction(NewNodeAction);
 		},
-		[&](const TSoftClassPtr<UGameQuestElementScriptable>& SoftClass, const TSoftClassPtr<UGameQuestGraphBase>&)
+		[&](const TSoftClassPtr<UGameQuestElementScriptable>& SoftClass, const TSoftClassPtr<UGameQuestGraphBase>& SupportType)
 		{
+			const UClass* SupportClass = SupportType.Get();
+			if (SupportClass == nullptr || QuestClass->IsChildOf(SupportClass) == false)
+			{
+				return;
+			}
 			FString ClassName = SoftClass.GetAssetName();
 			ClassName.RemoveFromEnd(TEXT("_C"));
 			const TSharedPtr<FNewClassElement_SchemaAction> NewNodeAction = MakeShared<FNewClassElement_SchemaAction>(LOCTEXT("Unload", "Unload"), FText::FromString(ClassName), FText::GetEmpty(), 0, GameQuestListNode, SoftClass);

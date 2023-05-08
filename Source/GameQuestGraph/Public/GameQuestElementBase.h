@@ -106,6 +106,13 @@ class GAMEQUESTGRAPH_API UGameQuestElementScriptable : public UObject
 	GENERATED_BODY()
 
 	friend struct FGameQuestElementScript;
+public:
+	UGameQuestElementScriptable(const FObjectInitializer& ObjectInitializer = FObjectInitializer());
+
+#if WITH_EDITORONLY_DATA
+	UPROPERTY(EditDefaultsOnly, Transient, Category = "Settings")
+	TSoftClassPtr<UGameQuestGraphBase> SupportType;
+#endif
 protected:
 	FGameQuestElementBase* Owner = nullptr;
 
@@ -114,6 +121,7 @@ protected:
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	int32 GetFunctionCallspace(UFunction* Function, FFrame* Stack) override;
 	bool CallRemoteFunction(UFunction* Function, void* Parameters, FOutParmRec* OutParms, FFrame* Stack) override;
+	void GetAssetRegistryTags(TArray<FAssetRegistryTag>& OutTags) const override;
 
 	UPROPERTY(EditDefaultsOnly, Transient, Category = "Settings")
 	uint8 bTickable : 1;
@@ -177,5 +185,6 @@ public:
 
 #if WITH_EDITOR
 	void GatherDependencies(TSet<TWeakObjectPtr<UBlueprint>>& InDependencies) const override;
+	TSubclassOf<UGameQuestGraphBase> GetSupportQuestGraph() const override;
 #endif
 };

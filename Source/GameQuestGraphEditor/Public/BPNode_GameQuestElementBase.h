@@ -36,8 +36,9 @@ public:
 
 	FGameQuestElementBase* GetElementNode() const;
 	void CopyTermDefaultsToDefaultNode(FGameQuestGraphCompilerContext& CompilerContext, UObject* DefaultObject, UGameQuestGraphGeneratedClass* ObjectClass, FStructProperty* NodeProperty) override;
+	FString GetRefVarPrefix() const override;
 
-	FString GetRefVarPrefix() const;
+	virtual TSubclassOf<UGameQuestGraphBase> GetSupportQuest() const;
 
 	FVector2D NodeSize;
 
@@ -102,14 +103,17 @@ public:
 	UStruct* GetNodeImplStruct() const override;
 	void GetMenuActions(FBlueprintActionDatabaseRegistrar& ActionRegistrar) const override;
 	UObject* GetJumpTargetForDoubleClick() const override;
+	bool IsActionFilteredOut(FBlueprintActionFilter const& Filter) override;
 
 	bool HasEvaluateActionParams() const override;
 	void ExpandNodeForEvaluateActionParams(UEdGraphPin*& AuthorityThenPin, UEdGraphPin*& ClientThenPin, FKismetCompilerContext& CompilerContext, UEdGraph* SourceGraph) override;
 	void CopyTermDefaultsToDefaultNode(FGameQuestGraphCompilerContext& CompilerContext, UObject* DefaultObject, UGameQuestGraphGeneratedClass* ObjectClass, FStructProperty* NodeProperty) override;
+	TSubclassOf<UGameQuestGraphBase> GetSupportQuest() const override;
 
 	struct FUnloadNodeData
 	{
 		TSoftClassPtr<UGameQuestElementScriptable> Class;
+		TSoftClassPtr<UGameQuestGraphBase> SupportType;
 	};
 	TOptional<FUnloadNodeData> UnloadNodeData;
 

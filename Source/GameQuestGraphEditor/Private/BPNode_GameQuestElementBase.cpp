@@ -358,6 +358,12 @@ void UBPNode_GameQuestElementBase::ExpandNode(FKismetCompilerContext& CompilerCo
 {
 	Super::ExpandNode(CompilerContext, SourceGraph);
 
+	const TSubclassOf<UGameQuestGraphBase> SupportQuest = GetSupportQuest();
+	if (SupportQuest == nullptr || CompilerContext.NewClass->IsChildOf(SupportQuest) == false)
+	{
+		CompilerContext.MessageLog.Warning(TEXT("@@not support this graph type"), this);
+	}
+
 	if (IsListMode() == false)
 	{
 		ExpandNodeForFinishEvents(CompilerContext, SourceGraph);
@@ -504,6 +510,12 @@ void UBPNode_GameQuestElementBase::CopyTermDefaultsToDefaultNode(FGameQuestGraph
 FString UBPNode_GameQuestElementBase::GetRefVarPrefix() const
 {
 	return FString::Printf(TEXT("%s_"), *(OwnerNode ? OwnerNode->GetRefVarName() : NAME_None).ToString());
+}
+
+TSubclassOf<UGameQuestGraphBase> UBPNode_GameQuestElementBase::GetSupportQuest() const
+{
+	const FGameQuestElementBase* ElementInstance = StructNodeInstance.GetPtr<FGameQuestElementBase>();
+	return ElementInstance ? ElementInstance->GetSupportQuestGraph() : nullptr;
 }
 
 void UBPNode_GameQuestElementBranchList::AllocateDefaultPins()
@@ -722,7 +734,7 @@ void UBPNode_GameQuestElementScript::GetMenuActions(FBlueprintActionDatabaseRegi
 	}
 
 	FGameQuestClassCollector::Get().ForEachDerivedClasses(UGameQuestElementScriptable::StaticClass(),
-	[&](const TSubclassOf<UGameQuestElementScriptable>& Class, const TSoftClassPtr<UGameQuestGraphBase>&)
+	[&](const TSubclassOf<UGameQuestElementScriptable>& Class, const TSoftClassPtr<UGameQuestGraphBase>& SupportType)
 	{
 		UBlueprintNodeSpawner* NodeSpawner = UBlueprintNodeSpawner::Create(GetClass());
 		check(NodeSpawner != nullptr);
@@ -734,7 +746,7 @@ void UBPNode_GameQuestElementScript::GetMenuActions(FBlueprintActionDatabaseRegi
 		});
 		ActionRegistrar.AddBlueprintAction(ActionKey, NodeSpawner);
 	},
-	[&](const TSoftClassPtr<UGameQuestElementScriptable>& SoftClass, const TSoftClassPtr<UGameQuestGraphBase>&)
+	[&](const TSoftClassPtr<UGameQuestElementScriptable>& SoftClass, const TSoftClassPtr<UGameQuestGraphBase>& SupportType)
 	{
 		UBlueprintNodeSpawner* NodeSpawner = UBlueprintNodeSpawner::Create(GetClass());
 		check(NodeSpawner != nullptr);
@@ -744,7 +756,7 @@ void UBPNode_GameQuestElementScript::GetMenuActions(FBlueprintActionDatabaseRegi
 			if (bIsTemplateNode)
 			{
 				UBPNode_GameQuestElementScript* ElementScriptNode = CastChecked<UBPNode_GameQuestElementScript>(NewNode);
-				ElementScriptNode->UnloadNodeData = FUnloadNodeData{ SoftClass };
+				ElementScriptNode->UnloadNodeData = FUnloadNodeData{ SoftClass, SupportType };
 			}
 			else if (const TSubclassOf<UGameQuestElementScriptable> Class = SoftClass.LoadSynchronous())
 			{
@@ -763,6 +775,35 @@ UObject* UBPNode_GameQuestElementScript::GetJumpTargetForDoubleClick() const
 		return ScriptInstance->GetClass()->ClassGeneratedBy;
 	}
 	return nullptr;
+}
+
+bool UBPNode_GameQuestElementScript::IsActionFilteredOut(FBlueprintActionFilter const& Filter)
+{
+	TSubclassOf<UGameQuestGraphBase> SupportType;
+	if (ScriptInstance)
+	{
+		SupportType = ScriptInstance->SupportType.Get();
+	}
+	else if (UnloadNodeData.IsSet())
+	{
+		SupportType = UnloadNodeData->SupportType.Get();
+	}
+	if (SupportType == nullptr)
+	{
+		return true;
+	}
+
+	for (const UBlueprint* Blueprint : Filter.Context.Blueprints)
+	{
+		if (UClass* Class = Blueprint->GeneratedClass)
+		{
+			if (Class == nullptr || !Class->IsChildOf(SupportType))
+			{
+				return true;
+			}
+		}
+	}
+	return false;
 }
 
 bool UBPNode_GameQuestElementScript::HasEvaluateActionParams() const
@@ -843,6 +884,19 @@ void UBPNode_GameQuestElementScript::CopyTermDefaultsToDefaultNode(FGameQuestGra
 	Parameters.DestClass = Instance->GetClass();
 	Parameters.ApplyFlags = RF_DefaultSubObject | RF_ArchetypeObject;
 	ActionScript->Instance = CastChecked<UGameQuestElementScriptable>(::StaticDuplicateObjectEx(Parameters));
+}
+
+TSubclassOf<UGameQuestGraphBase> UBPNode_GameQuestElementScript::GetSupportQuest() const
+{
+	if (ScriptInstance)
+	{
+		return ScriptInstance->SupportType.Get();
+	}
+	if (UnloadNodeData.IsSet())
+	{
+		return UnloadNodeData->SupportType.Get();
+	}
+	return nullptr;
 }
 
 void UBPNode_GameQuestElementScript::InitialByClass(const TSubclassOf<UGameQuestElementScriptable>& Class)

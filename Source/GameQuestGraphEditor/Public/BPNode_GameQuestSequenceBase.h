@@ -47,6 +47,7 @@ public:
 	struct FScriptNodeData
 	{
 		TSoftClassPtr<UGameQuestElementScriptable> Class;
+		TSoftClassPtr<UGameQuestGraphBase> SupportType;
 	};
 	TOptional<FScriptNodeData> ScriptNodeData;
 

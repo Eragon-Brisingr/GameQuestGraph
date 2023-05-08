@@ -214,7 +214,7 @@ void UBPNode_GameQuestSequenceSingle::GetMenuActions(FBlueprintActionDatabaseReg
 		ElementNode->PostPlacedNewNode();
 	};
 	FGameQuestClassCollector::Get().ForEachDerivedClasses(UGameQuestElementScriptable::StaticClass(),
-	[&](const TSubclassOf<UGameQuestElementScriptable>& Class, const TSoftClassPtr<UGameQuestGraphBase>&)
+	[&](const TSubclassOf<UGameQuestElementScriptable>& Class, const TSoftClassPtr<UGameQuestGraphBase>& SupportType)
 	{
 		UBlueprintNodeSpawner* NodeSpawner = UBlueprintNodeSpawner::Create(GetClass());
 		check(NodeSpawner != nullptr);
@@ -224,7 +224,7 @@ void UBPNode_GameQuestSequenceSingle::GetMenuActions(FBlueprintActionDatabaseReg
 			if (bIsTemplateNode)
 			{
 				UBPNode_GameQuestSequenceSingle* ElementScriptNode = CastChecked<UBPNode_GameQuestSequenceSingle>(NewNode);
-				ElementScriptNode->ScriptNodeData = FScriptNodeData{ TSoftClassPtr<UGameQuestElementScriptable>{ Class } };
+				ElementScriptNode->ScriptNodeData = FScriptNodeData{ TSoftClassPtr<UGameQuestElementScriptable>{ Class }, SupportType };
 			}
 			else
 			{
@@ -233,7 +233,7 @@ void UBPNode_GameQuestSequenceSingle::GetMenuActions(FBlueprintActionDatabaseReg
 		});
 		ActionRegistrar.AddBlueprintAction(ActionKey, NodeSpawner);
 	},
-	[&](const TSoftClassPtr<UGameQuestElementScriptable>& SoftClass, const TSoftClassPtr<UGameQuestGraphBase>&)
+	[&](const TSoftClassPtr<UGameQuestElementScriptable>& SoftClass, const TSoftClassPtr<UGameQuestGraphBase>& SupportType)
 	{
 		UBlueprintNodeSpawner* NodeSpawner = UBlueprintNodeSpawner::Create(GetClass());
 		check(NodeSpawner != nullptr);
@@ -243,7 +243,7 @@ void UBPNode_GameQuestSequenceSingle::GetMenuActions(FBlueprintActionDatabaseReg
 			if (bIsTemplateNode)
 			{
 				UBPNode_GameQuestSequenceSingle* ElementScriptNode = CastChecked<UBPNode_GameQuestSequenceSingle>(NewNode);
-				ElementScriptNode->ScriptNodeData = FScriptNodeData{ SoftClass };
+				ElementScriptNode->ScriptNodeData = FScriptNodeData{ SoftClass, SupportType };
 			}
 			else if (const TSubclassOf<UGameQuestElementScriptable> Class = SoftClass.LoadSynchronous())
 			{
@@ -338,9 +338,17 @@ void UBPNode_GameQuestSequenceSingle::DestroyNode()
 
 bool UBPNode_GameQuestSequenceSingle::IsActionFilteredOut(FBlueprintActionFilter const& Filter)
 {
-	const FGameQuestStructCollector& Collector = FGameQuestStructCollector::Get();
-	const FInstancedStruct* StructDefaultValue = Collector.ValidNodeStructMap.Find(ElementNodeStruct);
-	const TSubclassOf<UGameQuestGraphBase> SupportType = StructDefaultValue ? StructDefaultValue->Get<FGameQuestElementBase>().GetSupportQuestGraph() : nullptr;
+	TSubclassOf<UGameQuestGraphBase> SupportType;
+	if (ElementNodeStruct)
+	{
+		const FGameQuestStructCollector& Collector = FGameQuestStructCollector::Get();
+		const FInstancedStruct* StructDefaultValue = Collector.ValidNodeStructMap.Find(ElementNodeStruct);
+		SupportType = StructDefaultValue ? StructDefaultValue->Get<FGameQuestElementBase>().GetSupportQuestGraph() : nullptr;
+	}
+	else if (ScriptNodeData.IsSet())
+	{
+		SupportType = ScriptNodeData->SupportType.Get();
+	}
 	if (SupportType == nullptr)
 	{
 		return true;
