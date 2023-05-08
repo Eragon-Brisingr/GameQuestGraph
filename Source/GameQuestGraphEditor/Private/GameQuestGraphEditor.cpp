@@ -139,7 +139,7 @@ public:
 		}
 	}
 
-	TSharedRef<SWidget> CreateElementWidget(uint16 ElementId, FGameQuestElementBase* Element) const override
+	TSharedRef<SWidget> CreateElementWidget(const UGameQuestGraphBase* Quest, uint16 ElementId, FGameQuestElementBase* Element) const override
 	{
 		return SNew(SHorizontalBox)
 				+ SHorizontalBox::Slot()
@@ -182,13 +182,12 @@ public:
 					]
 				];
 	}
-	TSharedRef<SWidget> CreateElementList(const TArray<uint16>& ElementIds, const GameQuest::FLogicList* ElementLogics) const override
+	TSharedRef<SWidget> CreateElementList(const UGameQuestGraphBase* Quest, const TArray<uint16>& ElementIds, const GameQuest::FLogicList* ElementLogics) const override
 	{
 		static const auto SeparatorBrush = FGameQuestGraphSlateStyle::Get().GetBrush(TEXT("ThinLine.Horizontal"));
 		static FTextBlockStyle LogicHintTextStyle{ FCoreStyle::Get().GetWidgetStyle<FTextBlockStyle>(TEXT("NormalText")) };
 		LogicHintTextStyle.Font.OutlineSettings.OutlineSize = 1;
 
-		const UGameQuestGraphBase* Quest = GetGameQuest();
 		const TSharedRef<SVerticalBox> ElementList = SNew(SVerticalBox);
 		for (int32 Idx = 0; Idx < ElementIds.Num(); ++Idx)
 		{
@@ -232,12 +231,12 @@ public:
 				.AutoHeight()
 				.Padding(FMargin(0.f, 2.f, 0.f, 0.f))
 				[
-					CreateElementWidget(ElementId, Element)
+					CreateElementWidget(Quest, ElementId, Element)
 				];
 		}
 		return ElementList;
 	}
-	TSharedRef<SWidget> CreateSequenceHeader(uint16 SequenceId, FGameQuestSequenceBase* Sequence) const override
+	TSharedRef<SWidget> CreateSequenceHeader(const UGameQuestGraphBase* Quest, uint16 SequenceId, FGameQuestSequenceBase* Sequence) const override
 	{
 		return SNew(SHorizontalBox)
 				+ SHorizontalBox::Slot()
@@ -271,7 +270,7 @@ public:
 					]
 				];
 	}
-	TSharedRef<SWidget> ApplySequenceWrapper(uint16 SequenceId, FGameQuestSequenceBase* Sequence, const TSharedRef<SWidget>& SequenceWidget) override
+	TSharedRef<SWidget> ApplySequenceWrapper(const UGameQuestGraphBase* Quest, uint16 SequenceId, FGameQuestSequenceBase* Sequence, const TSharedRef<SWidget>& SequenceWidget) override
 	{
 		static const auto BodyBrush = FGameQuestGraphSlateStyle::Get().GetBrush(TEXT("GroupBorder"));
 		static const auto BorderImage = FGameQuestGraphSlateStyle::Get().GetBrush(TEXT("Border"));
@@ -313,7 +312,7 @@ public:
 			]
 		];
 	}
-	TSharedRef<SWidget> ApplyBranchElementWrapper(FGameQuestSequenceBranch* SequenceBranch, int32 BranchIdx, uint16 ElementId, FGameQuestElementBase* Element, const TSharedRef<SWidget>& ElementWidget) override
+	TSharedRef<SWidget> ApplyBranchElementWrapper(const UGameQuestGraphBase* Quest, FGameQuestSequenceBranch* SequenceBranch, int32 BranchIdx, uint16 ElementId, FGameQuestElementBase* Element, const TSharedRef<SWidget>& ElementWidget) override
 	{
 		static const auto BodyBrush = FGameQuestGraphSlateStyle::Get().GetBrush(TEXT("GroupBorder"));
 		return SNew(SBorder)

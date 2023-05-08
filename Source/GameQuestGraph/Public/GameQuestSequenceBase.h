@@ -74,7 +74,7 @@ protected:
 	virtual void WhenElementFinished(FGameQuestElementBase* FinishedElement, const FGameQuestFinishEvent& OnElementFinishedEvent) { unimplemented(); }
 	virtual void WhenElementUnfinished(FGameQuestElementBase* FinishedElement) { unimplemented(); }
 
-	void ExecuteFinishEvent(UFunction* FinishEvent, const TArray<uint16>& NextSequenceIds) const;
+	void ExecuteFinishEvent(UFunction* FinishEvent, const TArray<uint16>& NextSequenceIds, uint16 BranchId) const;
 	bool CanFinishListElements(const TArray<uint16>& Elements, const GameQuest::FLogicList& ElementLogics) const;
 };
 

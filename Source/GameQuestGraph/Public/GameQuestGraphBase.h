@@ -86,6 +86,8 @@ public:
 	virtual const FGameQuestFinishedTag* GetFinishedTag(const FName& Name) const;
 	virtual void BindingFinishedTags();
 
+	UObject* GetOwner() const { return Owner; }
+	FGameQuestSequenceSubQuest* GetOwnerNode() const { return OwnerNode; }
 	const TArray<uint16>& GetStartSequencesIds() const { return StartSequences; }
 	const TArray<uint16>& GetActivatedSequenceIds() const { return ActivatedSequences; }
 

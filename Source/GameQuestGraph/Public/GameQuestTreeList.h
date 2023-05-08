@@ -36,12 +36,12 @@ public:
 	UGameQuestGraphBase* GetGameQuest() const { return GameQuest.Get(); }
 
 	TMap<uint16, TSharedPtr<GameQuest::FNodeSequenceBase>> SequenceWidgetMap;
-	virtual TSharedRef<SWidget> CreateElementWidget(uint16 ElementId, FGameQuestElementBase* Element) const = 0;
-	virtual TSharedRef<SWidget> CreateElementList(const TArray<uint16>& ElementIds, const GameQuest::FLogicList* ElementLogics) const = 0;
-	virtual TSharedRef<SWidget> CreateSequenceHeader(uint16 SequenceId, FGameQuestSequenceBase* Sequence) const = 0;
-	virtual TSharedRef<SWidget> CreateSequenceContent(uint16 SequenceId, FGameQuestSequenceBase* Sequence);
-	virtual TSharedRef<SWidget> ApplySequenceWrapper(uint16 SequenceId, FGameQuestSequenceBase* Sequence, const TSharedRef<SWidget>& SequenceWidget);
-	virtual TSharedRef<SWidget> ApplyBranchElementWrapper(FGameQuestSequenceBranch* SequenceBranch, int32 BranchIdx, uint16 ElementId, FGameQuestElementBase* Element, const TSharedRef<SWidget>& ElementWidget);
+	virtual TSharedRef<SWidget> CreateElementWidget(const UGameQuestGraphBase* Quest, uint16 ElementId, FGameQuestElementBase* Element) const = 0;
+	virtual TSharedRef<SWidget> CreateElementList(const UGameQuestGraphBase* Quest, const TArray<uint16>& ElementIds, const GameQuest::FLogicList* ElementLogics) const = 0;
+	virtual TSharedRef<SWidget> CreateSequenceHeader(const UGameQuestGraphBase* Quest, uint16 SequenceId, FGameQuestSequenceBase* Sequence) const = 0;
+	virtual TSharedRef<SWidget> CreateSequenceContent(const UGameQuestGraphBase* Quest, uint16 SequenceId, FGameQuestSequenceBase* Sequence);
+	virtual TSharedRef<SWidget> ApplySequenceWrapper(const UGameQuestGraphBase* Quest, uint16 SequenceId, FGameQuestSequenceBase* Sequence, const TSharedRef<SWidget>& SequenceWidget);
+	virtual TSharedRef<SWidget> ApplyBranchElementWrapper(const UGameQuestGraphBase* Quest, FGameQuestSequenceBranch* SequenceBranch, int32 BranchIdx, uint16 ElementId, FGameQuestElementBase* Element, const TSharedRef<SWidget>& ElementWidget);
 	virtual TSharedRef<SGameQuestTreeListBase> CreateSubTreeList(UGameQuestGraphBase* SubQuest) const = 0;
 private:
 	void WhenSequenceActivated(FGameQuestSequenceBase* Sequence, uint16 SequenceId);
