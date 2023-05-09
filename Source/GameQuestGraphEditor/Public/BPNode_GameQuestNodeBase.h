@@ -165,3 +165,8 @@ public:
 	void SetAllowedTooltip();
 	void SetErrorTooltip();
 };
+
+namespace TunnelPin
+{
+	UEdGraphPin* Redirect(UEdGraphPin* Pin);
+};

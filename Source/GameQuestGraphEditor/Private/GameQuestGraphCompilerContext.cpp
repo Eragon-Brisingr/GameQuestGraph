@@ -12,37 +12,9 @@
 #include "GameQuestGraphBlueprint.h"
 #include "K2Node_BaseAsyncTask.h"
 #include "K2Node_CallFunction.h"
-#include "K2Node_Composite.h"
 #include "K2Node_FunctionEntry.h"
 #include "K2Node_VariableGet.h"
 #include "Kismet2/KismetReinstanceUtilities.h"
-
-namespace TunnelPinConverter
-{
-	inline UEdGraphPin* Convert(UEdGraphPin* Pin)
-	{
-		if (const UK2Node_Composite* CompositeNode = Cast<UK2Node_Composite>(Pin->GetOwningNode()))
-		{
-			UEdGraphPin* TunnelPin = CompositeNode->GetEntryNode()->FindPin(Pin->PinName, EGPD_Output);
-			if (TunnelPin && TunnelPin->LinkedTo.Num() == 1)
-			{
-				return Convert(TunnelPin->LinkedTo[0]);
-			}
-		}
-		else if (const UK2Node_Tunnel* ExitNode = Cast<UK2Node_Tunnel>(Pin->GetOwningNode()))
-		{
-			if (const UK2Node_Composite* OwningCompositeNode = ExitNode->GetTypedOuter<UK2Node_Composite>())
-			{
-				UEdGraphPin* TunnelPin = OwningCompositeNode->FindPin(Pin->PinName, EGPD_Output);
-				if (TunnelPin && TunnelPin->LinkedTo.Num() == 1)
-				{
-					return Convert(TunnelPin->LinkedTo[0]);
-				}
-			}
-		}
-		return Pin;
-	}
-};
 
 struct FQuestNodeCollector
 {
@@ -132,7 +104,7 @@ struct FQuestNodeCollector
 			{
 				for (UEdGraphPin* LinkToPin : Pin->LinkedTo)
 				{
-					UEdGraphNode* NextNode = TunnelPinConverter::Convert(LinkToPin)->GetOwningNode();
+					UEdGraphNode* NextNode = TunnelPin::Redirect(LinkToPin)->GetOwningNode();
 					if (QuestNode)
 					{
 						DeepSearch(NextNode, QuestNode, bIsElementNode ? Pin : FromPin, Visited);
@@ -203,7 +175,7 @@ void FGameQuestGraphCompilerContext::PreCompile()
 				{
 					for (UEdGraphPin* LinkToPin : Pin->LinkedTo)
 					{
-						bIsLinkGameQuestNode |= Check(TunnelPinConverter::Convert(LinkToPin)->GetOwningNode());
+						bIsLinkGameQuestNode |= Check(TunnelPin::Redirect(LinkToPin)->GetOwningNode());
 					}
 				}
 			}
@@ -250,7 +222,7 @@ void FGameQuestGraphCompilerContext::PreCompile()
 								{
 									for (UEdGraphPin* LinkToPin : Pin->LinkedTo)
 									{
-										LinkToPin = TunnelPinConverter::Convert(LinkToPin);
+										LinkToPin = TunnelPin::Redirect(LinkToPin);
 										if (IsGameQuestNode(LinkToPin->GetOwningNode()))
 										{
 											return true;

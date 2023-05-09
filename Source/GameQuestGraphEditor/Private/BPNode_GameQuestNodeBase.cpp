@@ -19,6 +19,7 @@
 #include "GameQuestType.h"
 #include "GraphEditorSettings.h"
 #include "K2Node_CallArrayFunction.h"
+#include "K2Node_Composite.h"
 #include "K2Node_CustomEvent.h"
 #include "K2Node_EnumLiteral.h"
 #include "K2Node_IfThenElse.h"
@@ -1032,6 +1033,30 @@ void FGameQuestElementDragDropOp::SetAllowedTooltip()
 void FGameQuestElementDragDropOp::SetErrorTooltip()
 {
 	SetToolTip(LOCTEXT("SelectInsertElementPosition", "SelectInsertElementPosition"), FAppStyle::GetBrush(TEXT("Graph.ConnectorFeedback.Error")));
+}
+
+UEdGraphPin* TunnelPin::Redirect(UEdGraphPin* Pin)
+{
+	if (const UK2Node_Composite* CompositeNode = Cast<UK2Node_Composite>(Pin->GetOwningNode()))
+	{
+		UEdGraphPin* TunnelPin = CompositeNode->GetEntryNode()->FindPin(Pin->PinName, EGPD_Output);
+		if (TunnelPin && TunnelPin->LinkedTo.Num() == 1)
+		{
+			return Redirect(TunnelPin->LinkedTo[0]);
+		}
+	}
+	else if (const UK2Node_Tunnel* ExitNode = Cast<UK2Node_Tunnel>(Pin->GetOwningNode()))
+	{
+		if (const UK2Node_Composite* OwningCompositeNode = ExitNode->GetTypedOuter<UK2Node_Composite>())
+		{
+			UEdGraphPin* TunnelPin = OwningCompositeNode->FindPin(Pin->PinName, EGPD_Output);
+			if (TunnelPin && TunnelPin->LinkedTo.Num() == 1)
+			{
+				return Redirect(TunnelPin->LinkedTo[0]);
+			}
+		}
+	}
+	return Pin;
 }
 
 #undef LOCTEXT_NAMESPACE

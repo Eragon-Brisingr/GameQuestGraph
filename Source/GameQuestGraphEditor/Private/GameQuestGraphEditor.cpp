@@ -139,13 +139,16 @@ public:
 		}
 	}
 
-	TSharedRef<SWidget> CreateElementWidget(const UGameQuestGraphBase* Quest, uint16 ElementId, FGameQuestElementBase* Element) const override
+	TSharedRef<SWidget> CreateElementWidget(const UGameQuestGraphBase* Quest, uint16 ElementId, FGameQuestElementBase* Element, const FGameQuestNodeBase* OwnerNode) const override
 	{
+		const FString ElementName = Element->GetNodeName().ToString();
+		const FString ShortName = ElementName.Right(ElementName.Len() - OwnerNode->GetNodeName().GetStringLength() - 1);
+
 		return SNew(SHorizontalBox)
 				+ SHorizontalBox::Slot()
 				.AutoWidth()
 				.VAlign(VAlign_Center)
-				.Padding(2.f, 0.f)
+				.Padding(2.f)
 				[
 					SNew(SCheckBox)
 					.IsEnabled(false)
@@ -153,20 +156,16 @@ public:
 				]
 				+ SHorizontalBox::Slot()
 				.VAlign(VAlign_Center)
-				.Padding(2.f, 0.f)
+				.Padding(2.f)
+				.FillWidth(1.f)
 				[
 					SNew(STextBlock)
-					.AutoWrapText(true)
-					.Text_Lambda([=]
-					{
-						const FText Describe = FText::FromName(Element->GetNodeName());
-						return Describe;
-					})
+					.Text(FText::FromString(ShortName))
 				]
 				+ SHorizontalBox::Slot()
 				.AutoWidth()
 				.VAlign(VAlign_Center)
-				.Padding(2.f, 0.f)
+				.Padding(2.f)
 				[
 					SNew(SButton)
 					.ButtonStyle(FAppStyle::Get(), "HoverHintOnly")
@@ -182,7 +181,7 @@ public:
 					]
 				];
 	}
-	TSharedRef<SWidget> CreateElementList(const UGameQuestGraphBase* Quest, const TArray<uint16>& ElementIds, const GameQuest::FLogicList* ElementLogics) const override
+	TSharedRef<SWidget> CreateElementList(const UGameQuestGraphBase* Quest, const TArray<uint16>& ElementIds, const GameQuest::FLogicList* ElementLogics, const FGameQuestNodeBase* OwnerNode) const override
 	{
 		static const auto SeparatorBrush = FGameQuestGraphSlateStyle::Get().GetBrush(TEXT("ThinLine.Horizontal"));
 		static FTextBlockStyle LogicHintTextStyle{ FCoreStyle::Get().GetWidgetStyle<FTextBlockStyle>(TEXT("NormalText")) };
@@ -198,7 +197,7 @@ public:
 				{
 					ElementList->AddSlot()
 						.AutoHeight()
-						.Padding(FMargin(2.f, 0.f, 2.f, 0.f))
+						.Padding(2.f)
 						[
 							SNew(SOverlay)
 							+ SOverlay::Slot()
@@ -229,9 +228,9 @@ public:
 			FGameQuestElementBase* Element = Quest->GetElementPtr(ElementId);
 			ElementList->AddSlot()
 				.AutoHeight()
-				.Padding(FMargin(0.f, 2.f, 0.f, 0.f))
+				.Padding(0.f)
 				[
-					CreateElementWidget(Quest, ElementId, Element)
+					CreateElementWidget(Quest, ElementId, Element, OwnerNode)
 				];
 		}
 		return ElementList;
@@ -241,7 +240,21 @@ public:
 		return SNew(SHorizontalBox)
 				+ SHorizontalBox::Slot()
 				.VAlign(VAlign_Center)
-				.Padding(2.f, 0.f)
+				.AutoWidth()
+				.Padding(2.f)
+				[
+					SNew(SImage)
+					.Image_Lambda([Sequence]
+					{
+						static const FSlateBrush* QuestBrush = FGameQuestGraphSlateStyle::Get().GetBrush(TEXT("Graph.Quest"));
+						static const FSlateBrush* InterruptBrush = FGameQuestGraphSlateStyle::Get().GetBrush(TEXT("Graph.Event.Interrupt"));
+						return Sequence->GetSequenceState() == FGameQuestSequenceBase::EState::Interrupted ? InterruptBrush : QuestBrush;
+					})
+				]
+				+ SHorizontalBox::Slot()
+				.VAlign(VAlign_Center)
+				.Padding(2.f)
+				.FillWidth(1.f)
 				[
 					SNew(STextBlock)
 					.AutoWrapText(true)
@@ -254,7 +267,7 @@ public:
 				+ SHorizontalBox::Slot()
 				.AutoWidth()
 				.VAlign(VAlign_Center)
-				.Padding(2.f, 0.f)
+				.Padding(2.f)
 				[
 					SNew(SButton)
 					.ButtonStyle(FAppStyle::Get(), "HoverHintOnly")
@@ -270,7 +283,102 @@ public:
 					]
 				];
 	}
-	TSharedRef<SWidget> ApplySequenceWrapper(const UGameQuestGraphBase* Quest, uint16 SequenceId, FGameQuestSequenceBase* Sequence, const TSharedRef<SWidget>& SequenceWidget) override
+	TSharedRef<SWidget> CreateSubQuestHeader(const UGameQuestGraphBase* Quest, FGameQuestSequenceSubQuest* SequenceSubQuest) const override
+	{
+		static const FSlateBrush* SubQuestBrush = FGameQuestGraphSlateStyle::Get().GetBrush(TEXT("Graph.Event.Start"));
+		return SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot()
+			.VAlign(VAlign_Center)
+			.AutoWidth()
+			.Padding(4.f)
+			[
+				SNew(SImage)
+				.Image(SubQuestBrush)
+			]
+			+ SHorizontalBox::Slot()
+			.VAlign(VAlign_Center)
+			.FillWidth(1.f)
+			.Padding(2.f)
+			[
+				SNew(STextBlock)
+				.Text(SequenceSubQuest->SubQuestInstance ? SequenceSubQuest->SubQuestInstance->GetClass()->GetDisplayNameText() : LOCTEXT("None", "None"))
+			]
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			.VAlign(VAlign_Center)
+			.Padding(2.f)
+			[
+				SNew(SButton)
+				.ButtonStyle(FAppStyle::Get(), "HoverHintOnly")
+				.ToolTipText(LOCTEXT("BrowseToSubQuestClass", "Browse To Sub Quest Class"))
+				.OnClicked_Lambda([this, SequenceSubQuest]
+				{
+					if (UObject* Blueprint = SequenceSubQuest->SubQuestInstance->GetClass()->ClassGeneratedBy)
+					{
+						TArray<UObject*> BrowserToObjects{ Blueprint };
+						GEditor->SyncBrowserToObjects(BrowserToObjects);
+					}
+					return FReply::Handled();
+				})
+				[
+					SNew(SImage)
+					.Image(FAppStyle::GetBrush(TEXT("Symbols.SearchGlass")))
+				]
+			];
+	}
+	TSharedRef<SWidget> CreateFinishedTagWidget(const UGameQuestGraphBase* Quest, FGameQuestSequenceSubQuest* SequenceSubQuest, const FGameQuestSequenceSubQuestFinishedTag& FinishedTag) const override
+	{
+		static const FSlateBrush* EndBrush = FGameQuestGraphSlateStyle::Get().GetBrush(TEXT("Graph.Event.End"));
+		return SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot()
+			.VAlign(VAlign_Center)
+			.AutoWidth()
+			.Padding(4.f)
+			[
+				SNew(SImage)
+				.Image(EndBrush)
+			]
+			+ SHorizontalBox::Slot()
+			.VAlign(VAlign_Center)
+			.FillWidth(1.f)
+			.Padding(2.f)
+			[
+				SNew(STextBlock)
+				.Text(FText::FromName(FinishedTag.TagName))
+			]
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			.VAlign(VAlign_Center)
+			.Padding(2.f)
+			[
+				SNew(SButton)
+				.ButtonStyle(FAppStyle::Get(), "HoverHintOnly")
+				.ToolTipText(FinishedTag.TagName != FGameQuestFinishedTag::FinishCompletedTagName ? LOCTEXT("BrowseToFinishedTagNode", "Browse To Finished Tag Node") : LOCTEXT("BrowseToFinishedTagPreNode", "Browse To Finished Node") )
+				.OnClicked_Lambda([this, SequenceSubQuest, FinishedTag]
+				{
+					if (FinishedTag.TagName != FGameQuestFinishedTag::FinishCompletedTagName)
+					{
+						JumpToFinishedTagNode(SequenceSubQuest->SubQuestInstance, FinishedTag);
+					}
+					else if (FinishedTag.PreSubQuestBranch != GameQuest::IdNone)
+					{
+						const FGameQuestElementBase* BranchElement = SequenceSubQuest->SubQuestInstance->GetElementPtr(FinishedTag.PreSubQuestBranch);
+						JumpToQuestNode(SequenceSubQuest->SubQuestInstance, BranchElement->GetNodeName());
+					}
+					else if (FinishedTag.PreSubQuestSequence != GameQuest::IdNone)
+					{
+						const FGameQuestSequenceBase* Sequence = SequenceSubQuest->SubQuestInstance->GetSequencePtr(FinishedTag.PreSubQuestSequence);
+						JumpToQuestNode(SequenceSubQuest->SubQuestInstance, Sequence->GetNodeName());
+					}
+					return FReply::Handled();
+				})
+				[
+					SNew(SImage)
+					.Image(FAppStyle::GetBrush(TEXT("Symbols.SearchGlass")))
+				]
+			];
+	}
+	TSharedRef<SWidget> ApplySequenceWrapper(const UGameQuestGraphBase* Quest, uint16 SequenceId, FGameQuestSequenceBase* Sequence, const TSharedRef<SWidget>& SequenceWidget) const override
 	{
 		static const auto BodyBrush = FGameQuestGraphSlateStyle::Get().GetBrush(TEXT("GroupBorder"));
 		static const auto BorderImage = FGameQuestGraphSlateStyle::Get().GetBrush(TEXT("Border"));
@@ -312,7 +420,7 @@ public:
 			]
 		];
 	}
-	TSharedRef<SWidget> ApplyBranchElementWrapper(const UGameQuestGraphBase* Quest, FGameQuestSequenceBranch* SequenceBranch, int32 BranchIdx, uint16 ElementId, FGameQuestElementBase* Element, const TSharedRef<SWidget>& ElementWidget) override
+	TSharedRef<SWidget> ApplyBranchElementWrapper(const UGameQuestGraphBase* Quest, FGameQuestSequenceBranch* SequenceBranch, int32 BranchIdx, uint16 ElementId, FGameQuestElementBase* Element, const TSharedRef<SWidget>& ElementWidget) const override
 	{
 		static const auto BodyBrush = FGameQuestGraphSlateStyle::Get().GetBrush(TEXT("GroupBorder"));
 		return SNew(SBorder)
@@ -364,6 +472,62 @@ public:
 			}
 		}
 	}
+	static void JumpToFinishedTagNode(const UGameQuestGraphBase* Quest, const FGameQuestSequenceSubQuestFinishedTag& FinishedTag)
+	{
+		const UGameQuestGraphBlueprint* Blueprint = Cast<UGameQuestGraphBlueprint>(Quest->GetClass()->ClassGeneratedBy);
+		if (Blueprint == nullptr || Blueprint->GameQuestGraph == nullptr)
+		{
+			return;
+		}
+		for (const UEdGraphNode* Node : Blueprint->GameQuestGraph->Nodes)
+		{
+			const UBPNode_GameQuestFinishedTag* FinishedTagNode = Cast<UBPNode_GameQuestFinishedTag>(Node);
+			if (FinishedTagNode == nullptr)
+			{
+				continue;
+			}
+			struct FPreNodeFinder
+			{
+				uint16 PreNodeId;
+				TArray<const UEdGraphNode*> Visited;
+				const UBPNode_GameQuestNodeBase* Do(const UEdGraphNode* Node)
+				{
+					if (Visited.Contains(Node))
+					{
+						return nullptr;
+					}
+					Visited.Add(Node);
+					if (const UBPNode_GameQuestNodeBase* QuestNode = Cast<UBPNode_GameQuestNodeBase>(Node))
+					{
+						if (QuestNode->NodeId == PreNodeId)
+						{
+							return QuestNode;
+						}
+					}
+					for (UEdGraphPin* Pin : Node->Pins)
+					{
+						if (Pin->Direction == EGPD_Input && (Pin->PinType.PinCategory == UEdGraphSchema_K2::PC_Exec))
+						{
+							for (UEdGraphPin* LinkToPin : Pin->LinkedTo)
+							{
+								if (const UBPNode_GameQuestNodeBase* QuestNode = Do(TunnelPin::Redirect(LinkToPin)->GetOwningNode()))
+								{
+									return QuestNode;
+								}
+							}
+						}
+					}
+					return nullptr;
+				};
+			};
+			if (FinishedTagNode->FinishedTag == FinishedTag.TagName
+				&& FPreNodeFinder{ FinishedTag.PreSubQuestBranch != GameQuest::IdNone ? FinishedTag.PreSubQuestBranch : FinishedTag.PreSubQuestSequence }.Do(FinishedTagNode) != nullptr)
+			{
+				FKismetEditorUtilities::BringKismetToFocusAttentionOnObject(FinishedTagNode);
+				return;
+			}
+		}
+	}
 };
 
 class FGameQuestGraphEditor::SGameQuestTreeViewerSubQuest : public SGameQuestTreeViewerBase
@@ -382,8 +546,7 @@ public:
 	}
 	TSharedRef<SGameQuestTreeListBase> CreateSubTreeList(UGameQuestGraphBase* SubQuest) const override
 	{
-		return SNew(FGameQuestGraphEditor::SGameQuestTreeViewerSubQuest, SubQuest)
-			.ElementPadding(ElementPadding);
+		return SNew(FGameQuestGraphEditor::SGameQuestTreeViewerSubQuest, SubQuest);
 	}
 };
 
@@ -417,8 +580,7 @@ public:
 	}
 	TSharedRef<SGameQuestTreeListBase> CreateSubTreeList(UGameQuestGraphBase* SubQuest) const override
 	{
-		return SNew(FGameQuestGraphEditor::SGameQuestTreeViewerSubQuest, SubQuest)
-			.ElementPadding(ElementPadding);
+		return SNew(FGameQuestGraphEditor::SGameQuestTreeViewerSubQuest, SubQuest);
 	}
 private:
 	FDelegateHandle OnSetObjectBeingDebuggedHandle;
