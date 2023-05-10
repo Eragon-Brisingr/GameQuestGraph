@@ -31,6 +31,8 @@ public:
 	void DestroyNode() override;
 	bool CanPlaceBreakpoints() const override { return false; }
 	void ExpandNode(FKismetCompilerContext& CompilerContext, UEdGraph* SourceGraph) override;
+	bool CanPasteHere(const UEdGraph* TargetGraph) const override;
+	void PostPasteNode() override;
 	bool CanEditChange(const FProperty* InProperty) const override;
 	void GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const override;
 
@@ -63,6 +65,7 @@ public:
 	void DestroyNode() override;
 	void GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const override;
 	void ExpandNode(FKismetCompilerContext& CompilerContext, UEdGraph* SourceGraph) override;
+	void PostPasteNode() override;
 
 	void CreateClassVariablesFromNode(FGameQuestGraphCompilerContext& CompilerContext) override;
 	void CopyTermDefaultsToDefaultNode(FGameQuestGraphCompilerContext& CompilerContext, UObject* DefaultObject, UGameQuestGraphGeneratedClass* ObjectClass, FStructProperty* NodeProperty) override;

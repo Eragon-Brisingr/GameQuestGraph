@@ -75,8 +75,6 @@ public:
 	FText GetTooltipText() const override;
 	bool CanJumpToDefinition() const override { return true; }
 	void JumpToDefinition() const override;
-	// TODO：增加复制的支持
-	bool CanDuplicateNode() const override { return false; }
 
 	UPROPERTY(EditAnywhere, Category=PinOptions, EditFixedSize)
 	TArray<FOptionalPinFromProperty> ShowPinForProperties;

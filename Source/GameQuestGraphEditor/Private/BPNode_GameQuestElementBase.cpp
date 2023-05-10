@@ -377,6 +377,70 @@ void UBPNode_GameQuestElementBase::ExpandNode(FKismetCompilerContext& CompilerCo
 	CompilerContext.MovePinLinksToIntermediate(*FindPinChecked(UEdGraphSchema_K2::PN_ReturnValue), *RefVarPin);
 }
 
+bool UBPNode_GameQuestElementBase::CanPasteHere(const UEdGraph* TargetGraph) const
+{
+	using namespace GameQuestUtils::Pin;
+	if (GetNodeImplStruct() == nullptr)
+	{
+		return false;
+	}
+	if (IsListMode())
+	{
+		const UEdGraphPin* ListPin = FindPinChecked(ListPinName);
+		if (ListPin->LinkedTo.Num() == 0 || ListPin->LinkedTo[0] == nullptr)
+		{
+			return false;
+		}
+		if (const UBPNode_GameQuestSequenceListBase* SequenceList = Cast<UBPNode_GameQuestSequenceListBase>(ListPin->LinkedTo[0]->GetOwningNode()))
+		{
+			return SequenceList->Elements.Contains(this);
+		}
+		else if (const UBPNode_GameQuestElementBranchList* BranchList = Cast<UBPNode_GameQuestElementBranchList>(ListPin->LinkedTo[0]->GetOwningNode()))
+		{
+			return BranchList->Elements.Contains(this);
+		}
+	}
+	else
+	{
+		const UEdGraphPin* BranchPin = FindPinChecked(BranchPinName);
+		if (BranchPin->LinkedTo.Num() > 0 && BranchPin->LinkedTo[0] != nullptr && Cast<UBPNode_GameQuestSequenceSingle>(BranchPin->LinkedTo[0]->GetOwningNode()))
+		{
+			return false;
+		}
+	}
+	if (const UBlueprint* Blueprint = FBlueprintEditorUtils::FindBlueprintForGraph(TargetGraph))
+	{
+		if (ensure(Blueprint->GeneratedClass))
+		{
+			const UClass* SupportGameQuest = GetSupportQuest();
+			if (SupportGameQuest == nullptr || Blueprint->GeneratedClass->IsChildOf(SupportGameQuest) == false)
+			{
+				return false;
+			}
+		}
+	}
+	else
+	{
+		return false;
+	}
+	return Super::CanPasteHere(TargetGraph);
+}
+
+void UBPNode_GameQuestElementBase::PostPasteNode()
+{
+	Super::PostPasteNode();
+
+	using namespace GameQuestUtils::Pin;
+	if (IsListMode() == false)
+	{
+		const UEdGraphPin* BranchPin = FindPinChecked(BranchPinName);
+		if (BranchPin->LinkedTo.Num() == 0)
+		{
+			OwnerNode = nullptr;
+		}
+	}
+}
+
 bool UBPNode_GameQuestElementBase::CanEditChange(const FProperty* InProperty) const
 {
 	const FName PropertyName = InProperty ? InProperty->GetFName() : NAME_None;
@@ -561,6 +625,13 @@ void UBPNode_GameQuestElementBranchList::ExpandNode(FKismetCompilerContext& Comp
 	}
 
 	CheckOptionalIsValid(this, CompilerContext.MessageLog);
+}
+
+void UBPNode_GameQuestElementBranchList::PostPasteNode()
+{
+	Super::PostPasteNode();
+
+	QuestListPostPasteNode(this);
 }
 
 void UBPNode_GameQuestElementBranchList::CreateClassVariablesFromNode(FGameQuestGraphCompilerContext& CompilerContext)

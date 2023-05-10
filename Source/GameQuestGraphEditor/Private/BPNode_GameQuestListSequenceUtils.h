@@ -573,6 +573,23 @@ void QuestListInsertElement(TElementList* List, UBPNode_GameQuestElementBase* El
 }
 
 template<typename TElementList>
+void QuestListPostPasteNode(TElementList* ElementList)
+{
+	for (int32 Idx = ElementList->Elements.Num() - 1; Idx >= 0; --Idx)
+	{
+		const UBPNode_GameQuestElementBase* Element = ElementList->Elements[Idx];
+		if (Element == nullptr || Element->OwnerNode != ElementList || Element->GetOuter() != ElementList->GetOuter())
+		{
+			ElementList->Elements.RemoveAt(Idx);
+			if (Idx > 0)
+			{
+				ElementList->ElementLogics.RemoveAt(Idx - 1);
+			}
+		}
+	}
+}
+
+template<typename TElementList>
 void QuestListRemoveElement(TElementList* List, UBPNode_GameQuestElementBase* Element)
 {
 	using namespace GameQuestUtils;

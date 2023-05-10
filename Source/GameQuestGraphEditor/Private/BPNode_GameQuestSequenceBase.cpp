@@ -436,6 +436,13 @@ void UBPNode_GameQuestSequenceListBase::ExpandNode(FKismetCompilerContext& Compi
 	CheckOptionalIsValid(this, CompilerContext.MessageLog);
 }
 
+void UBPNode_GameQuestSequenceListBase::PostPasteNode()
+{
+	Super::PostPasteNode();
+
+	QuestListPostPasteNode(this);
+}
+
 void UBPNode_GameQuestSequenceListBase::CopyTermDefaultsToDefaultNode(FGameQuestGraphCompilerContext& CompilerContext, UObject* DefaultObject, UGameQuestGraphGeneratedClass* ObjectClass, FStructProperty* NodeProperty)
 {
 	Super::CopyTermDefaultsToDefaultNode(CompilerContext, DefaultObject, ObjectClass, NodeProperty);
