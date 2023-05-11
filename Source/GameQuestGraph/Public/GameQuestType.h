@@ -8,6 +8,8 @@
 
 GAMEQUESTGRAPH_API DECLARE_LOG_CATEGORY_EXTERN(LogGameQuest, Log, All);
 
+class UGameQuestGraphBase;
+
 UENUM()
 enum class EGameQuestSequenceLogic
 {
@@ -54,4 +56,40 @@ public:
 	{
 		return *FString::Printf(TEXT("__GQFT_%s_%s"), *NodeName.ToString(), *FinishedTag.ToString());
 	}
+};
+
+struct FGameQuestSequenceBase;
+
+USTRUCT(BlueprintType)
+struct GAMEQUESTGRAPH_API FGameQuestSequencePtr
+{
+	GENERATED_BODY()
+public:
+	FGameQuestSequencePtr() = default;
+	FGameQuestSequencePtr(FGameQuestSequenceBase& Sequence);
+
+	TWeakObjectPtr<UGameQuestGraphBase> Owner;
+	FGameQuestSequenceBase* SequencePtr = nullptr;
+
+	operator bool() const { return Owner.IsValid(); }
+	FGameQuestSequenceBase* operator->() const { return SequencePtr; }
+	FGameQuestSequenceBase* operator*() const { return SequencePtr; }
+};
+
+struct FGameQuestElementBase;
+
+USTRUCT(BlueprintType)
+struct GAMEQUESTGRAPH_API FGameQuestElementPtr
+{
+	GENERATED_BODY()
+public:
+	FGameQuestElementPtr() = default;
+	FGameQuestElementPtr(FGameQuestElementBase& Element);
+
+	TWeakObjectPtr<UGameQuestGraphBase> Owner;
+	FGameQuestElementBase* ElementPtr = nullptr;
+
+	operator bool() const { return Owner.IsValid(); }
+	FGameQuestElementBase* operator->() const { return ElementPtr; }
+	FGameQuestElementBase* operator*() const { return ElementPtr; }
 };

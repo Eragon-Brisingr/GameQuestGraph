@@ -522,18 +522,6 @@ bool FGameQuestElementScript::ReplicateSubobject(UActorChannel* Channel, FOutBun
 	return WroteSomething;
 }
 
-void UGameQuestElementScriptable::GetEvaluateGraphExposedInputs() const
-{
-	check(Owner);
-	Owner->GetEvaluateGraphExposedInputs();
-}
-
-UGameQuestGraphBase* UGameQuestElementScriptable::GetOwnerQuest() const
-{
-	check(Owner);
-	return Owner->OwnerQuest;
-}
-
 DEFINE_FUNCTION(UGameQuestElementScriptable::execFinishElement)
 {
 	Stack.StepCompiledIn<FProperty>(nullptr);

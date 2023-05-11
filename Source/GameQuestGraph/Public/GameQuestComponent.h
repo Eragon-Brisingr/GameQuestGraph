@@ -41,13 +41,26 @@ protected:
 	virtual void WhenQuestStarted(UGameQuestGraphBase* FinishedQuest) {}
 	virtual void WhenQuestFinished(UGameQuestGraphBase* FinishedQuest) {}
 
-	virtual void WhenQuestActivated(UGameQuestGraphBase* Quest) {}
-	virtual void WhenQuestDeactivated(UGameQuestGraphBase* Quest) {}
-	virtual void WhenFinishedQuestAdded(UGameQuestGraphBase* Quest) {}
-	virtual void WhenFinishedQuestRemoved(UGameQuestGraphBase* Quest) {}
+	virtual void WhenQuestActivated(UGameQuestGraphBase* Quest) { OnQuestActivated.Broadcast(this, Quest); }
+	virtual void WhenQuestDeactivated(UGameQuestGraphBase* Quest) { OnQuestDeactivated.Broadcast(this, Quest); }
+	virtual void WhenFinishedQuestAdded(UGameQuestGraphBase* Quest) { OnFinishedQuestAdded.Broadcast(this, Quest); }
+	virtual void WhenFinishedQuestRemoved(UGameQuestGraphBase* Quest) { OnFinishedQuestRemoved.Broadcast(this, Quest); }
 public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
 	void AddQuest(UGameQuestGraphBase* Quest, bool AutoActivate = true);
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
 	void RemoveQuest(UGameQuestGraphBase* Quest);
+
+	DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_TwoParams(FOnQuestActivated, UGameQuestComponent, OnQuestActivated, UGameQuestComponent*, QuestComponent, UGameQuestGraphBase*, Quest);
+	UPROPERTY(BlueprintAssignable, Transient)
+	FOnQuestActivated OnQuestActivated;
+	DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_TwoParams(FOnQuestDeactivated, UGameQuestComponent, OnQuestDeactivated, UGameQuestComponent*, QuestComponent, UGameQuestGraphBase*, Quest);
+	UPROPERTY(BlueprintAssignable, Transient)
+	FOnQuestDeactivated OnQuestDeactivated;
+	DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_TwoParams(FOnFinishedQuestAdded, UGameQuestComponent, OnFinishedQuestAdded, UGameQuestComponent*, QuestComponent, UGameQuestGraphBase*, Quest);
+	UPROPERTY(BlueprintAssignable, Transient)
+	FOnFinishedQuestAdded OnFinishedQuestAdded;
+	DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_TwoParams(FOnFinishedQuestRemoved, UGameQuestComponent, OnFinishedQuestRemoved, UGameQuestComponent*, QuestComponent, UGameQuestGraphBase*, Quest);
+	UPROPERTY(BlueprintAssignable, Transient)
+	FOnFinishedQuestRemoved OnFinishedQuestRemoved;
 };

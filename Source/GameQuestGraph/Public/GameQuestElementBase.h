@@ -146,14 +146,20 @@ protected:
 	void WhenForceFinishElement(const FName& EventName);
 
 	UFUNCTION(BlueprintCallable, Category = "GameQuest")
-	void GetEvaluateGraphExposedInputs() const;
+	void GetEvaluateGraphExposedInputs() const { Owner->GetEvaluateGraphExposedInputs(); }
 	UFUNCTION(BlueprintCallable, Category = "GameQuest")
-	UGameQuestGraphBase* GetOwnerQuest() const;
+	UGameQuestGraphBase* GetOwnerQuest() const { return Owner->OwnerQuest; }
 	UFUNCTION(BlueprintCallable, CustomThunk, Category = "GameQuest")
 	void FinishElement(const FGameQuestFinishEvent& Event);
 	DECLARE_FUNCTION(execFinishElement);
 	UFUNCTION(BlueprintCallable, Category = "GameQuest")
 	void UnfinishedElement() { Owner->UnfinishedElement(); }
+	UFUNCTION(BlueprintCallable, Category = "GameQuest")
+	bool IsFinished() const { return Owner->bIsFinished; }
+	UFUNCTION(BlueprintCallable, Category = "GameQuest")
+	bool IsActivated() const { return Owner->bIsActivated; }
+	UFUNCTION(BlueprintCallable, Category = "GameQuest")
+	bool IsOptional() const { return Owner->bIsOptional; }
 };
 
 USTRUCT(meta = (Hidden))

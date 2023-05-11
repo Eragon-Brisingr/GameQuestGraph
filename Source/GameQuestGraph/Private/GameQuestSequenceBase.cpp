@@ -398,7 +398,15 @@ void FGameQuestSequenceBranch::WhenElementFinished(FGameQuestElementBase* Finish
 		}
 		else
 		{
-			const bool IsAllBranchElementAllowFinish = Branches.ContainsByPredicate([this](const FGameQuestSequenceBranchElement& E) { return OwnerQuest->GetElementPtr(E.Element)->bIsActivated; }) == false;
+			const bool IsAllBranchElementAllowFinish = !Branches.ContainsByPredicate([&](const FGameQuestSequenceBranchElement& E)->bool
+			{
+				const FGameQuestElementBase* Element = OwnerQuest->GetElementPtr(E.Element);
+				if (Element == FinishedElement)
+				{
+					return false;
+				}
+				return Element->bIsActivated;
+			});
 			if (!IsAllBranchElementAllowFinish)
 			{
 #if WITH_EDITOR

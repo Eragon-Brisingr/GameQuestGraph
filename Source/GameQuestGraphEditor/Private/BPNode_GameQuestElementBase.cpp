@@ -953,7 +953,7 @@ void UBPNode_GameQuestElementScript::CopyTermDefaultsToDefaultNode(FGameQuestGra
 	FObjectDuplicationParameters Parameters(Instance, DefaultObject);
 	Parameters.DestName = GetRefVarName();
 	Parameters.DestClass = Instance->GetClass();
-	Parameters.ApplyFlags = RF_DefaultSubObject | RF_ArchetypeObject;
+	Parameters.ApplyFlags = RF_Public | RF_DefaultSubObject | RF_ArchetypeObject;
 	ActionScript->Instance = CastChecked<UGameQuestElementScriptable>(::StaticDuplicateObjectEx(Parameters));
 }
 

@@ -326,6 +326,27 @@ void UBPNode_GameQuestSequenceSingle::PostPlacedNewNode()
 	}
 }
 
+bool UBPNode_GameQuestSequenceSingle::CanPasteHere(const UEdGraph* TargetGraph) const
+{
+	using namespace GameQuestUtils::Pin;
+	const UEdGraphPin* BranchPin = FindPinChecked(BranchPinName);
+	if (BranchPin->LinkedTo.Num() == 0 || BranchPin->LinkedTo[0] == nullptr)
+	{
+		return false;
+	}
+	const UBPNode_GameQuestElementBase* LinkedElement = Cast<UBPNode_GameQuestElementBase>(BranchPin->LinkedTo[0]->GetOwningNode());
+	if (LinkedElement == nullptr)
+	{
+		return false;
+	}
+	const UEdGraphPin* ElementPin = LinkedElement->FindPin(BranchPinName);
+	if (ElementPin == nullptr || ElementPin->LinkedTo.Num() == 0 || ElementPin->LinkedTo[0]->GetOwningNode() != this)
+	{
+		return false;
+	}
+	return Super::CanPasteHere(TargetGraph);
+}
+
 void UBPNode_GameQuestSequenceSingle::DestroyNode()
 {
 	if (Element)

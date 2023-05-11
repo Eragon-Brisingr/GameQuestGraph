@@ -6,7 +6,10 @@
 #include "GameQuestElementBase.h"
 #include "GameQuestGraphBase.h"
 #include "GameQuestSequenceBase.h"
+#include "Blueprint/UserWidget.h"
+#include "Slate/SObjectWidget.h"
 #include "Widgets/Layout/SExpandableArea.h"
+#include "Widgets/Layout/SSeparator.h"
 
 #define LOCTEXT_NAMESPACE "GameQuestGraph"
 
@@ -606,7 +609,7 @@ SGameQuestTreeListBase::~SGameQuestTreeListBase()
 	}
 }
 
-void SGameQuestTreeListBase::SetGameQuest(UGameQuestGraphBase* InGameQuest)
+void SGameQuestTreeListBase::SetQuest(UGameQuestGraphBase* InGameQuest)
 {
 	if (UGameQuestGraphBase* PreGameQuest = GameQuest.Get())
 	{
@@ -644,7 +647,7 @@ TSharedRef<SWidget> SGameQuestTreeListBase::ApplyBranchElementWrapper(const UGam
 
 void SGameQuestTreeListBase::WhenSequenceActivated(FGameQuestSequenceBase* Sequence, uint16 SequenceId)
 {
-	const UGameQuestGraphBase* Quest = GetGameQuest();
+	const UGameQuestGraphBase* Quest = GetQuest();
 	if (Sequence->PreSequence == GameQuest::IdNone)
 	{
 		if (SequenceWidgetMap.Contains(SequenceId))
@@ -683,5 +686,173 @@ void SGameQuestTreeListBase::WhenSequenceDeactivated(FGameQuestSequenceBase* Seq
 		FindWidget->BuildNextSequences(this, Sequence->OwnerQuest);
 	}
 }
+
+class UGameQuestTreeList::SGameQuestTreeListUMG : public SGameQuestTreeListBase
+{
+	using Super = SGameQuestTreeListBase;
+protected:
+	TObjectPtr<UGameQuestTreeList> Owner;
+public:
+	void Construct(const FArguments& InArgs, UGameQuestTreeList* InOwner)
+	{
+		Super::Construct(InArgs);
+		Owner = InOwner;
+
+		ChildSlot
+		[
+			SAssignNew(SequenceList, SVerticalBox)
+		];
+	}
+	TSharedRef<SWidget> CreateElementWidget(const UGameQuestGraphBase* Quest, uint16 ElementId, FGameQuestElementBase* Element, const FGameQuestNodeBase* OwnerNode) const override
+	{
+		if (Owner->ElementWidget == nullptr || !ensure(Owner->ElementWidget->ImplementsInterface(UGameQuestTreeListElement::StaticClass())))
+		{
+			return SNew(STextBlock).Text(FText::FromName(Element->GetNodeName()));
+		}
+		UUserWidget* UserWidget = CreateWidget<UUserWidget>(Owner, Owner->ElementWidget);
+		IGameQuestTreeListElement::Execute_WhenSetElement(UserWidget, Quest, *Element);
+		return UserWidget->TakeWidget();
+	}
+	TSharedRef<SWidget> CreateElementList(const UGameQuestGraphBase* Quest, const TArray<uint16>& ElementIds, const GameQuest::FLogicList* ElementLogics, const FGameQuestNodeBase* OwnerNode) const override
+	{
+		static FTextBlockStyle LogicHintTextStyle{ FCoreStyle::Get().GetWidgetStyle<FTextBlockStyle>(TEXT("NormalText")) };
+		LogicHintTextStyle.Font.OutlineSettings.OutlineSize = 1;
+
+		const TSharedRef<SVerticalBox> ElementList = SNew(SVerticalBox);
+		for (int32 Idx = 0; Idx < ElementIds.Num(); ++Idx)
+		{
+			if (Idx >= 1)
+			{
+				const EGameQuestSequenceLogic Logic = (*ElementLogics)[Idx - 1];
+				if (Logic == EGameQuestSequenceLogic::Or)
+				{
+					ElementList->AddSlot()
+						.AutoHeight()
+						.Padding(2.f)
+						[
+							SNew(SOverlay)
+							+ SOverlay::Slot()
+							.HAlign(HAlign_Fill)
+							.VAlign(VAlign_Center)
+							[
+								SNew(SSeparator)
+								.Orientation(Orient_Horizontal)
+								.Thickness(2.0f)
+								.ColorAndOpacity(FSlateColor{ FLinearColor::Gray })
+							]
+							+ SOverlay::Slot()
+							.HAlign(HAlign_Center)
+							.VAlign(VAlign_Center)
+							[
+								SNew(STextBlock)
+								.Visibility(EVisibility::HitTestInvisible)
+								.Justification(ETextJustify::Center)
+								.TextStyle(&LogicHintTextStyle)
+								.Text(LOCTEXT("Or", "Or"))
+							]
+						];
+				}
+			}
+			const uint16 ElementId = ElementIds[Idx];
+			FGameQuestElementBase* Element = Quest->GetElementPtr(ElementId);
+			ElementList->AddSlot()
+				.AutoHeight()
+				.Padding(0.f)
+				[
+					CreateElementWidget(Quest, ElementId, Element, OwnerNode)
+				];
+		}
+		return ElementList;
+	}
+	TSharedRef<SWidget> CreateSequenceHeader(const UGameQuestGraphBase* Quest, uint16 SequenceId, FGameQuestSequenceBase* Sequence) const override
+	{
+		if (Owner->SequenceHeader == nullptr || !ensure(Owner->SequenceHeader->ImplementsInterface(UGameQuestTreeListSequence::StaticClass())))
+		{
+			return SNew(STextBlock).Text(FText::FromName(Sequence->GetNodeName()));
+		}
+		UUserWidget* UserWidget = CreateWidget<UUserWidget>(Owner, Owner->SequenceHeader);
+		IGameQuestTreeListSequence::Execute_WhenSetSequence(UserWidget, Quest, *Sequence);
+		return UserWidget->TakeWidget();
+	}
+	TSharedRef<SWidget> CreateSubQuestHeader(const UGameQuestGraphBase* Quest, FGameQuestSequenceSubQuest* SequenceSubQuest) const override
+	{
+		if (Owner->SubQuestHeader == nullptr || !ensure(Owner->SubQuestHeader->ImplementsInterface(UGameQuestTreeListSubQuest::StaticClass())))
+		{
+			return SNew(STextBlock).Text(FText::FromName(SequenceSubQuest->GetNodeName()));
+		}
+		UUserWidget* UserWidget = CreateWidget<UUserWidget>(Owner, Owner->SubQuestHeader);
+		IGameQuestTreeListSubQuest::Execute_WhenSetSubQuest(UserWidget, Quest, *SequenceSubQuest, SequenceSubQuest->SubQuestInstance);
+		return UserWidget->TakeWidget();
+	}
+	TSharedRef<SWidget> CreateFinishedTagWidget(const UGameQuestGraphBase* Quest, FGameQuestSequenceSubQuest* SequenceSubQuest, const FGameQuestSequenceSubQuestFinishedTag& FinishedTag) const override
+	{
+		if (Owner->FinishedTagWidget == nullptr || !ensure(Owner->FinishedTagWidget->ImplementsInterface(UGameQuestTreeListFinishedTag::StaticClass())))
+		{
+			return SNew(STextBlock).Text(FText::FromName(FinishedTag.TagName));
+		}
+		UUserWidget* UserWidget = CreateWidget<UUserWidget>(Owner, Owner->FinishedTagWidget);
+		IGameQuestTreeListFinishedTag::Execute_WhenSetFinishedTag(UserWidget, Quest, FinishedTag.TagName);
+		return UserWidget->TakeWidget();
+	}
+};
+
+class UGameQuestTreeList::SGameQuestTreeListSubUMG : public SGameQuestTreeListUMG
+{
+	using Super = SGameQuestTreeListUMG;
+public:
+	void Construct(const FArguments& InArgs, UGameQuestTreeList* InOwner, UGameQuestGraphBase* SubQuest)
+	{
+		Super::Construct(InArgs, InOwner);
+		SetQuest(SubQuest);
+	}
+	TSharedRef<SGameQuestTreeListBase> CreateSubTreeList(UGameQuestGraphBase* SubQuest) const override
+	{
+		return SNew(SGameQuestTreeListSubUMG, Owner.Get(), SubQuest);
+	}
+};
+
+class UGameQuestTreeList::SGameQuestTreeListMainUMG : public SGameQuestTreeListUMG
+{
+	TSharedRef<SGameQuestTreeListBase> CreateSubTreeList(UGameQuestGraphBase* SubQuest) const override
+	{
+		return SNew(SGameQuestTreeListSubUMG, Owner.Get(), SubQuest);
+	}
+};
+
+void UGameQuestTreeList::SetQuest(UGameQuestGraphBase* NewQuest)
+{
+	if (Quest == NewQuest)
+	{
+		return;
+	}
+	Quest = NewQuest;
+	if (Quest && MainQuestTree)
+	{
+		MainQuestTree->SetQuest(Quest);
+	}
+}
+
+TSharedRef<SWidget> UGameQuestTreeList::RebuildWidget()
+{
+	MainQuestTree = SNew(SGameQuestTreeListMainUMG, this);
+	if (Quest)
+	{
+		MainQuestTree->SetQuest(Quest);
+	}
+	return MainQuestTree.ToSharedRef();
+}
+
+void UGameQuestTreeList::ReleaseSlateResources(bool bReleaseChildren)
+{
+	MainQuestTree.Reset();
+	Super::ReleaseSlateResources(bReleaseChildren);
+}
+
+#if WITH_EDITOR
+const FText UGameQuestTreeList::GetPaletteCategory()
+{
+	return LOCTEXT("Misc", "Misc");
+}
+#endif
 
 #undef LOCTEXT_NAMESPACE

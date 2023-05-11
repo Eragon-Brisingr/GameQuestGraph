@@ -172,7 +172,7 @@ public:
 	void DeactivateBranches(bool bHasAuthority);
 };
 
-USTRUCT(BlueprintType)
+USTRUCT(BlueprintType, BlueprintInternalUseOnly)
 struct GAMEQUESTGRAPH_API FGameQuestSequenceSubQuestFinishedTag
 {
 	GENERATED_BODY()

@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "GameQuestType.h"
 #include "Components/Widget.h"
-#include "UObject/Object.h"
 #include "GameQuestTreeList.generated.h"
 
 namespace GameQuest
@@ -33,8 +32,8 @@ public:
 
 	TSharedPtr<SVerticalBox> SequenceList;
 
-	void SetGameQuest(UGameQuestGraphBase* InGameQuest);
-	UGameQuestGraphBase* GetGameQuest() const { return GameQuest.Get(); }
+	void SetQuest(UGameQuestGraphBase* InGameQuest);
+	UGameQuestGraphBase* GetQuest() const { return GameQuest.Get(); }
 
 	TMap<uint16, TSharedPtr<GameQuest::FSequenceNodeBase>> SequenceWidgetMap;
 	virtual TSharedRef<SWidget> CreateElementWidget(const UGameQuestGraphBase* Quest, uint16 ElementId, FGameQuestElementBase* Element, const FGameQuestNodeBase* OwnerNode) const = 0;
@@ -59,4 +58,81 @@ UCLASS()
 class GAMEQUESTGRAPH_API UGameQuestTreeList : public UWidget
 {
 	GENERATED_BODY()
+public:
+	UPROPERTY(BlueprintReadOnly)
+	TObjectPtr<UGameQuestGraphBase> Quest;
+	UFUNCTION(BlueprintCallable)
+	void SetQuest(UGameQuestGraphBase* NewQuest);
+
+	UPROPERTY(EditAnywhere, meta = (MustImplement = "/Script/GameQuestGraph.GameQuestTreeListElement"))
+	TSubclassOf<UUserWidget> ElementWidget;
+	UPROPERTY(EditAnywhere, meta = (MustImplement = "/Script/GameQuestGraph.GameQuestTreeListSequence"))
+	TSubclassOf<UUserWidget> SequenceHeader;
+	UPROPERTY(EditAnywhere, meta = (MustImplement = "/Script/GameQuestGraph.GameQuestTreeListSubQuest"))
+	TSubclassOf<UUserWidget> SubQuestHeader;
+	UPROPERTY(EditAnywhere, meta = (MustImplement = "/Script/GameQuestGraph.GameQuestTreeListFinishedTag"))
+	TSubclassOf<UUserWidget> FinishedTagWidget;
+
+	class SGameQuestTreeListUMG;
+	class SGameQuestTreeListSubUMG;
+	class SGameQuestTreeListMainUMG;
+	TSharedPtr<SGameQuestTreeListMainUMG> MainQuestTree;
+	TSharedRef<SWidget> RebuildWidget() override;
+	void ReleaseSlateResources(bool bReleaseChildren) override;
+
+#if WITH_EDITOR
+	const FText GetPaletteCategory() override;
+#endif
+};
+
+UINTERFACE(MinimalAPI)
+class UGameQuestTreeListElement : public UInterface
+{
+	GENERATED_BODY()
+};
+class GAMEQUESTGRAPH_API IGameQuestTreeListElement
+{
+	GENERATED_BODY()
+public:
+	UFUNCTION(BlueprintNativeEvent, Category = GameQuest)
+	void WhenSetElement(const UGameQuestGraphBase* Quest, const FGameQuestElementPtr& Element);
+};
+
+UINTERFACE(MinimalAPI)
+class UGameQuestTreeListSequence : public UInterface
+{
+	GENERATED_BODY()
+};
+class GAMEQUESTGRAPH_API IGameQuestTreeListSequence
+{
+	GENERATED_BODY()
+public:
+	UFUNCTION(BlueprintNativeEvent, Category = GameQuest)
+	void WhenSetSequence(const UGameQuestGraphBase* Quest, const FGameQuestSequencePtr& Sequence);
+};
+
+UINTERFACE(MinimalAPI)
+class UGameQuestTreeListSubQuest : public UInterface
+{
+	GENERATED_BODY()
+};
+class GAMEQUESTGRAPH_API IGameQuestTreeListSubQuest
+{
+	GENERATED_BODY()
+public:
+	UFUNCTION(BlueprintNativeEvent, Category = GameQuest)
+	void WhenSetSubQuest(const UGameQuestGraphBase* Quest, const FGameQuestSequencePtr& Sequence, const UGameQuestGraphBase* SubQuest);
+};
+
+UINTERFACE(MinimalAPI)
+class UGameQuestTreeListFinishedTag : public UInterface
+{
+	GENERATED_BODY()
+};
+class GAMEQUESTGRAPH_API IGameQuestTreeListFinishedTag
+{
+	GENERATED_BODY()
+public:
+	UFUNCTION(BlueprintNativeEvent, Category = GameQuest)
+	void WhenSetFinishedTag(const UGameQuestGraphBase* Quest, const FName& FinishedTagName);
 };

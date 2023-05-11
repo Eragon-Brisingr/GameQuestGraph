@@ -135,7 +135,7 @@ public:
 
 		if (DebugGameQuest)
 		{
-			SetGameQuest(DebugGameQuest);
+			SetQuest(DebugGameQuest);
 		}
 	}
 
@@ -570,7 +570,7 @@ public:
 		GameQuestEditor = InGameQuestEditor;
 		OnSetObjectBeingDebuggedHandle = GameQuestBlueprint->OnSetObjectBeingDebugged().AddLambda([this](UObject* DebugObject)
 		{
-			SetGameQuest(Cast<UGameQuestGraphBase>(DebugObject));
+			SetQuest(Cast<UGameQuestGraphBase>(DebugObject));
 		});
 		Super::Construct(InArgs, Cast<UGameQuestGraphBase>(GameQuestBlueprint->GetObjectBeingDebugged()));
 	}

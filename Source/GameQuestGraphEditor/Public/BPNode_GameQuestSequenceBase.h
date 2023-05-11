@@ -31,6 +31,7 @@ public:
 	TSharedPtr<SGraphNode> CreateVisualWidget() override;
 	FSlateIcon GetIconAndTint(FLinearColor& OutColor) const override;
 	void PostPlacedNewNode() override;
+	bool CanPasteHere(const UEdGraph* TargetGraph) const override;
 	void DestroyNode() override;
 	bool IsActionFilteredOut(FBlueprintActionFilter const& Filter) override;
 
