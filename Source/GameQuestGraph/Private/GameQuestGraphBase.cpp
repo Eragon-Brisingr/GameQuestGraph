@@ -304,10 +304,10 @@ FGameQuestElementBase* UGameQuestGraphBase::GetElementPtr(uint16 Id) const
 	return const_cast<FGameQuestElementBase*>(Element);
 }
 
-const GameQuest::FLogicList* UGameQuestGraphBase::GetLogicList(const FGameQuestNodeBase* Node) const
+const GameQuest::FLogicList& UGameQuestGraphBase::GetLogicList(const FGameQuestNodeBase* Node) const
 {
 	UGameQuestGraphGeneratedClass* Class = CastChecked<UGameQuestGraphGeneratedClass>(GetClass());
-	return &Class->NodeIdLogicsMap[Class->NodeNameIdMap[Node->GetNodeName()]];
+	return Class->NodeIdLogicsMap[Class->NodeNameIdMap[Node->GetNodeName()]];
 }
 
 uint16 UGameQuestGraphBase::GetSequenceId(const FGameQuestSequenceBase* Sequence) const

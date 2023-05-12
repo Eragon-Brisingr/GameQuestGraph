@@ -76,7 +76,7 @@ protected:
 public:
 	virtual FGameQuestSequenceBase* GetSequencePtr(uint16 Id) const;
 	virtual FGameQuestElementBase* GetElementPtr(uint16 Id) const;
-	virtual const GameQuest::FLogicList* GetLogicList(const FGameQuestNodeBase* Node) const;
+	virtual const GameQuest::FLogicList& GetLogicList(const FGameQuestNodeBase* Node) const;
 	virtual uint16 GetSequenceId(const FGameQuestSequenceBase* Sequence) const;
 	virtual uint16 GetElementId(const FGameQuestElementBase* Element) const;
 	virtual TArray<FName> GetFinishedTagNames() const;
@@ -136,6 +136,8 @@ private:
 	friend class UBPNode_GameQuestFinishedTag;
 	friend class UBPNode_GameQuestSequenceSubQuest;
 #endif
+	friend struct FGameQuestPrivateVisitor;
+
 	UFUNCTION(BlueprintCallable, CustomThunk, meta = (CustomStructureParam = Sequence, BlueprintInternalUseOnly = true))
 	void TryActivateSequence(UPARAM(Ref) FGameQuestSequenceBase& Sequence);
 	DECLARE_FUNCTION(execTryActivateSequence);

@@ -713,7 +713,7 @@ public:
 		IGameQuestTreeListElement::Execute_WhenSetElement(UserWidget, Quest, *Element);
 		return UserWidget->TakeWidget();
 	}
-	TSharedRef<SWidget> CreateElementList(const UGameQuestGraphBase* Quest, const TArray<uint16>& ElementIds, const GameQuest::FLogicList* ElementLogics, const FGameQuestNodeBase* OwnerNode) const override
+	TSharedRef<SWidget> CreateElementList(const UGameQuestGraphBase* Quest, const TArray<uint16>& ElementIds, const GameQuest::FLogicList& ElementLogics, const FGameQuestNodeBase* OwnerNode) const override
 	{
 		static FTextBlockStyle LogicHintTextStyle{ FCoreStyle::Get().GetWidgetStyle<FTextBlockStyle>(TEXT("NormalText")) };
 		LogicHintTextStyle.Font.OutlineSettings.OutlineSize = 1;
@@ -723,7 +723,7 @@ public:
 		{
 			if (Idx >= 1)
 			{
-				const EGameQuestSequenceLogic Logic = (*ElementLogics)[Idx - 1];
+				const EGameQuestSequenceLogic Logic = ElementLogics[Idx - 1];
 				if (Logic == EGameQuestSequenceLogic::Or)
 				{
 					ElementList->AddSlot()

@@ -32,6 +32,7 @@ public:
 	{}
 
 protected:
+	friend struct FGameQuestPrivateVisitor;
 	void TryActivateSequence();
 
 	void ActivateSequence(uint16 SequenceId);

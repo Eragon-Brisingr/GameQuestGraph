@@ -323,7 +323,7 @@ void FGameQuestSequenceList::WhenSequenceDeactivated(bool bHasAuthority)
 
 void FGameQuestSequenceList::WhenElementFinished(FGameQuestElementBase* FinishedElement, const FGameQuestFinishEvent& OnElementFinishedEvent)
 {
-	if (CanFinishListElements(Elements, *OwnerQuest->GetLogicList(this)))
+	if (CanFinishListElements(Elements, OwnerQuest->GetLogicList(this)))
 	{
 		DeactivateSequence(OwnerQuest->GetSequenceId(this));
 		TGuardValue<Context::FAddNextSequenceIdFunc> AddNextSequenceIdFuncGuard{ Context::AddNextSequenceIdFunc, [this](const uint16 SequenceId)
@@ -439,7 +439,7 @@ void FGameQuestSequenceBranch::WhenElementFinished(FGameQuestElementBase* Finish
 		}))
 	{
 		FGameQuestElementBranchList* BranchList = GameQuestCastChecked<FGameQuestElementBranchList>(OwnerQuest->GetElementPtr(ListBranch->Element));
-		if (CanFinishListElements(BranchList->Elements, *OwnerQuest->GetLogicList(BranchList)))
+		if (CanFinishListElements(BranchList->Elements, OwnerQuest->GetLogicList(BranchList)))
 		{
 			BranchList->FinishElement(BranchList->OnListFinished, GET_MEMBER_NAME_CHECKED(FGameQuestElementBranchList, OnListFinished));
 		}
@@ -464,7 +464,7 @@ bool FGameQuestSequenceBranch::CanActivateBranchElement() const
 	{
 		return true;
 	}
-	return CanFinishListElements(Elements, *OwnerQuest->GetLogicList(this));
+	return CanFinishListElements(Elements, OwnerQuest->GetLogicList(this));
 }
 
 void FGameQuestSequenceBranch::ActivateBranches(bool bHasAuthority)

@@ -22,5 +22,9 @@ void FGameQuestNodeBase::GetEvaluateGraphExposedInputs(bool bHasAuthority) const
 
 void FGameQuestNodeBase::MarkNodeNetDirty() const
 {
+	if (NodeProperty == nullptr)
+	{
+		return;
+	}
 	UNetPushModelHelpers::MarkPropertyDirtyFromRepIndex(OwnerQuest, NodeProperty->RepIndex, NodeProperty->GetFName());
 }
