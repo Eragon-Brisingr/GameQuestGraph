@@ -40,24 +40,39 @@ struct FQuestNodeCollector
 	TArray<UBPNode_GameQuestFinishedTag*> FinishedTagNodes;
 	struct FNodePin
 	{
-		UBPNode_GameQuestElementBase* Node;
+		UBPNode_GameQuestNodeBase* Node;
 		FName EventName;
+		friend bool operator==(const FNodePin& LHS, const FNodePin& RHS)
+		{
+			return LHS.Node == RHS.Node && LHS.EventName == RHS.EventName;
+		}
 	};
-	TMap<UBPNode_GameQuestNodeBase*, TArray<FNodePin>> NodeFromEventPinMap;
+	TMap<FName, TArray<FNodePin, TInlineAllocator<1>>> FinishedTagPreNodesMap;
+	TMap<UBPNode_GameQuestNodeBase*, TArray<FNodePin, TInlineAllocator<1>>> NodeFromEventPinMap;
 	void DeepSearch(UEdGraphNode* Node, UEdGraphNode* FromNode, UEdGraphPin* FromPin, TSet<UEdGraphNode*>& Visited)
 	{
-		UBPNode_GameQuestNodeBase* QuestNode = Cast<UBPNode_GameQuestNodeBase>(Node);
+		if (UBPNode_GameQuestFinishedTag* FinishedTagNode = Cast<UBPNode_GameQuestFinishedTag>(Node))
+		{
+			FinishedTagNodes.Add(FinishedTagNode);
+			auto& PreNodes = FinishedTagPreNodesMap.FindOrAdd(FinishedTagNode->FinishedTag);
+			if (UBPNode_GameQuestNodeBase* QuestNode = Cast<UBPNode_GameQuestNodeBase>(FromNode))
+			{
+				PreNodes.AddUnique({ QuestNode, FromPin ? FromPin->GetFName() : NAME_None });
+			}
+			return;
+		}
+
 		if (Visited.Contains(Node))
 		{
-			if (QuestNode)
+			if (UBPNode_GameQuestNodeBase* QuestNode = Cast<UBPNode_GameQuestNodeBase>(Node))
 			{
 				if (UBPNode_GameQuestNodeBase* FromQuestNode = Cast<UBPNode_GameQuestNodeBase>(FromNode))
 				{
-					PreviousNodeMap.FindOrAdd(QuestNode).Add(FromQuestNode);
+					PreviousNodeMap.FindOrAdd(QuestNode).AddUnique(FromQuestNode);
 				}
 				if (FromPin)
 				{
-					NodeFromEventPinMap.FindOrAdd(QuestNode).Add({ CastChecked<UBPNode_GameQuestElementBase>(FromPin->GetOwningNode()), FromPin->GetFName() });
+					NodeFromEventPinMap.FindOrAdd(QuestNode).AddUnique({ CastChecked<UBPNode_GameQuestNodeBase>(FromPin->GetOwningNode()), FromPin->GetFName() });
 					FromPin = nullptr;
 				}
 			}
@@ -65,30 +80,25 @@ struct FQuestNodeCollector
 		}
 		Visited.Add(Node);
 
-		if (UBPNode_GameQuestFinishedTag* FinishedTagNode = Cast<UBPNode_GameQuestFinishedTag>(Node))
-		{
-			FinishedTagNodes.Add(FinishedTagNode);
-			return;
-		}
-
+		UBPNode_GameQuestNodeBase* QuestNode = Cast<UBPNode_GameQuestNodeBase>(Node);
 		if (QuestNode)
 		{
 			if (UBPNode_GameQuestSequenceBase* SequenceNode = Cast<UBPNode_GameQuestSequenceBase>(QuestNode))
 			{
-				SequenceNodes.Add(SequenceNode);
+				SequenceNodes.AddUnique(SequenceNode);
 			}
 			if (UBPNode_GameQuestNodeBase* FromQuestNode = Cast<UBPNode_GameQuestNodeBase>(FromNode))
 			{
-				SuccessorNodeMap.FindOrAdd(FromQuestNode).Add(QuestNode);
-				PreviousNodeMap.FindOrAdd(QuestNode).Add(FromQuestNode);
+				SuccessorNodeMap.FindOrAdd(FromQuestNode).AddUnique(QuestNode);
+				PreviousNodeMap.FindOrAdd(QuestNode).AddUnique(FromQuestNode);
 			}
 			else if (UBPNode_GameQuestEntryEvent* FromEventNode = Cast<UBPNode_GameQuestEntryEvent>(FromNode))
 			{
-				StartEntryNodeMap.FindOrAdd(FromEventNode).Add(QuestNode);
+				StartEntryNodeMap.FindOrAdd(FromEventNode).AddUnique(QuestNode);
 			}
 			if (FromPin)
 			{
-				NodeFromEventPinMap.FindOrAdd(QuestNode).Add({ CastChecked<UBPNode_GameQuestElementBase>(FromPin->GetOwningNode()), FromPin->GetFName() });
+				NodeFromEventPinMap.FindOrAdd(QuestNode).AddUnique({ CastChecked<UBPNode_GameQuestNodeBase>(FromPin->GetOwningNode()), FromPin->GetFName() });
 				FromPin = nullptr;
 			}
 		}
@@ -97,7 +107,7 @@ struct FQuestNodeCollector
 			// SequenceSingleNode is combined node
 			Node = SequenceSingle->Element;
 		}
-		const bool bIsElementNode = Node->IsA(UBPNode_GameQuestElementBase::StaticClass());
+		const bool bIsRecordEventNode = Node->IsA(UBPNode_GameQuestElementBase::StaticClass()) || Node->IsA(UBPNode_GameQuestSequenceSubQuest::StaticClass());
 		for (UEdGraphPin* Pin : Node->Pins)
 		{
 			if (Pin->Direction == EGPD_Output && Pin->PinType.PinCategory == UEdGraphSchema_K2::PC_Exec)
@@ -107,7 +117,7 @@ struct FQuestNodeCollector
 					UEdGraphNode* NextNode = TunnelPin::Redirect(LinkToPin)->GetOwningNode();
 					if (QuestNode)
 					{
-						DeepSearch(NextNode, QuestNode, bIsElementNode ? Pin : FromPin, Visited);
+						DeepSearch(NextNode, QuestNode, bIsRecordEventNode ? Pin : FromPin, Visited);
 					}
 					else
 					{
@@ -364,6 +374,7 @@ void FGameQuestGraphCompilerContext::CopyTermDefaultsToDefaultObject(UObject* De
 	Class->NodeToSuccessorMap.Empty();
 	Class->NodeToPredecessorMap.Empty();
 	Class->NodeIdEventNameMap.Empty();
+	Class->FinishedTagPreNodesMap.Empty();
 
 	for (UBPNode_GameQuestSequenceBase* SequenceNode : QuestNodeCollector->SequenceNodes)
 	{
@@ -386,8 +397,20 @@ void FGameQuestGraphCompilerContext::CopyTermDefaultsToDefaultObject(UObject* De
 	{
 		for (const auto& NodePin : NodePins)
 		{
-			const UBPNode_GameQuestElementBase* ElementNode = NodePin.Node;
-			Class->NodeIdEventNameMap.FindOrAdd(ElementNode->NodeId).Add({ NodePin.EventName, Node->NodeId });
+			const UBPNode_GameQuestNodeBase* QuestNode = NodePin.Node;
+			Class->NodeIdEventNameMap.FindOrAdd(QuestNode->NodeId).Add({ NodePin.EventName, Node->NodeId });
+		}
+	}
+	for (const auto& [FinishedTag, PreNodes] : QuestNodeCollector->FinishedTagPreNodesMap)
+	{
+		if (PreNodes.Num() == 0)
+		{
+			continue;
+		}
+		auto& Ids = Class->FinishedTagPreNodesMap.Add(FinishedTag);
+		for (const auto& PreNode : PreNodes)
+		{
+			Ids.Add({ PreNode.EventName, PreNode.Node->NodeId });
 		}
 	}
 

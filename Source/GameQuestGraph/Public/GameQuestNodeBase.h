@@ -36,7 +36,6 @@ protected:
 
 #if WITH_EDITOR
 	friend class UGameQuestGraphBlueprint;
-	virtual void GatherDependencies(TSet<TWeakObjectPtr<UBlueprint>>& InDependencies) const {}
 #endif
 private:
 	FStructProperty* NodeProperty;

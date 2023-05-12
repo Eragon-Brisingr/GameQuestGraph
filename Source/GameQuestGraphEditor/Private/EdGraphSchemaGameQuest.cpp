@@ -7,6 +7,7 @@
 #include "BlueprintConnectionDrawingPolicy.h"
 #include "BPNode_GameQuestElementBase.h"
 #include "BPNode_GameQuestFinishedTag.h"
+#include "BPNode_GameQuestSequenceBase.h"
 #include "GameQuestElementBase.h"
 #include "GameQuestGraphBase.h"
 #include "GameQuestGraphBlueprint.h"
@@ -43,6 +44,7 @@ public:
 			FArrangedWidget& Widget;
 		};
 		TArray<FTagNode> FinishedTagNodes;
+		TMap<FName, TArray<FTagNode>> FinishedTagNodeMap;
 		for (int32 NodeIndex = 0; NodeIndex < ArrangedNodes.Num(); ++NodeIndex)
 		{
 			FArrangedWidget& CurWidget = ArrangedNodes[NodeIndex];
@@ -54,6 +56,7 @@ public:
 			else if (UBPNode_GameQuestFinishedTag* FinishedTagNode = Cast<UBPNode_GameQuestFinishedTag>(ChildNode->GetNodeObj()))
 			{
 				FinishedTagNodes.Add({ FinishedTagNode, CurWidget });
+				FinishedTagNodeMap.FindOrAdd(FinishedTagNode->FinishedTag).Add({ FinishedTagNode, CurWidget });
 			}
 		}
 
@@ -65,7 +68,7 @@ public:
 			{
 				const FArrangedWidget& Widget;
 			};
-			TMap<const UEdGraphPin*, FPinWidget> ElementPinMap;
+			TMap<const UEdGraphPin*, FPinWidget> EventPinMap;
 			for (const auto& [Widget, ArrangedWidget] : InPinGeometries)
 			{
 				const TSharedRef<SGraphPin> Pin = StaticCastSharedRef<SGraphPin>(Widget);
@@ -76,7 +79,11 @@ public:
 					{
 						continue;
 					}
-					ElementPinMap.Add(PinObj, FPinWidget{ ArrangedWidget });
+					EventPinMap.Add(PinObj, FPinWidget{ ArrangedWidget });
+				}
+				else if (const UBPNode_GameQuestSequenceSubQuest* SequenceSubQuest = Cast<UBPNode_GameQuestSequenceSubQuest>(PinObj->GetOwningNode()))
+				{
+					EventPinMap.Add(PinObj, FPinWidget{ ArrangedWidget });
 				}
 			}
 			FConnectionParams Params;
@@ -84,6 +91,7 @@ public:
 			Params.EndDirection = EGPD_Input;
 			Params.WireColor = FColor::Purple;
 			Params.WireThickness = 1.f;
+			const float Padding = ZoomFactor * 65.f;
 			for (const auto& [NodeId, NextNodes] : Class->NodeToSuccessorMap)
 			{
 				const FNode* Node = QuestNodeMap.Find(Class->NodeIdPropertyMap[NodeId]->GetFName());
@@ -91,55 +99,88 @@ public:
 				{
 					continue;
 				}
-				const float Padding = ZoomFactor * 65.f;
-				if (const UBPNode_GameQuestElementBase* Element = Cast<UBPNode_GameQuestElementBase>(Node->QuestNode))
+				const UBPNode_GameQuestNodeBase* QuestNode = Node->QuestNode;
+				if (const UBPNode_GameQuestSequenceSingle* SingleNode = Cast<UBPNode_GameQuestSequenceSingle>(Node->QuestNode))
 				{
-					using FEventNameToNextNode = UGameQuestGraphGeneratedClass::FEventNameToNextNode;
-					const auto& EventNames = Class->NodeIdEventNameMap.FindRef(Element->NodeId);
-					for (const uint16 NextNodeId : NextNodes)
+					QuestNode = SingleNode->Element;
+				}
+				using FEventNameToNextNode = UGameQuestGraphGeneratedClass::FEventNameNodeId;
+				const auto EventNames = Class->NodeIdEventNameMap.Find(QuestNode->NodeId);
+				for (const uint16 NextNodeId : NextNodes)
+				{
+					const FNode* NextNode = QuestNodeMap.Find(Class->NodeIdPropertyMap[NextNodeId]->GetFName());
+					if (NextNode == nullptr)
 					{
-						const FNode* NextNode = QuestNodeMap.Find(Class->NodeIdPropertyMap[NextNodeId]->GetFName());
-						if (NextNode == nullptr)
-						{
-							continue;
-						}
-						const FVector2D EndLinkPoint = NextNode->Widget.Geometry.GetAbsolutePosition() + FVector2D{ 0.f, Padding };
+						continue;
+					}
+					const FVector2D EndLinkPoint = NextNode->Widget.Geometry.GetAbsolutePosition() + FVector2D{ 0.f, Padding };
 
-						const FEventNameToNextNode* EventName = EventNames.FindByPredicate([NextNodeId](const FEventNameToNextNode& E){ return E.NextNode == NextNodeId; });
-						if (EventName != nullptr)
+					const FEventNameToNextNode* EventName = EventNames ? EventNames->FindByPredicate([NextNodeId](const FEventNameToNextNode& E){ return E.NodeId == NextNodeId; }) : nullptr;
+					if (EventName != nullptr)
+					{
+						const UEdGraphPin* Pin = QuestNode->FindPinChecked(EventName->EventName);
+						if (const FPinWidget* PinWidget = EventPinMap.Find(Pin))
 						{
-							const UEdGraphPin* Pin = Element->FindPinChecked(EventName->EventName);
-							if (const FPinWidget* PinWidget = ElementPinMap.Find(Pin))
+							const FVector2D PinSize = PinWidget->Widget.Geometry.GetAbsoluteSize();
+							const FVector2D StartLinkPoint = PinWidget->Widget.Geometry.GetAbsolutePosition() + FVector2D{ PinSize.X, PinSize.Y / 2.f + 6.f * ZoomFactor };
+							DrawConnection(WireLayerID, StartLinkPoint, EndLinkPoint, Params);
+						}
+					}
+					else if (const FNode* StartNode = QuestNodeMap.Find(Class->NodeIdPropertyMap[QuestNode->NodeId]->GetFName()))
+					{
+						const FVector2D StartLinkPoint = StartNode->Widget.Geometry.GetAbsolutePosition() + FVector2D{ StartNode->Widget.Geometry.GetAbsoluteSize().X, Padding };
+						DrawConnection(WireLayerID, StartLinkPoint, EndLinkPoint, Params);
+					}
+				}
+			}
+
+			for (const auto& [TagName, PreNodes] : Class->FinishedTagPreNodesMap)
+			{
+				for (const auto& PreNode : PreNodes)
+				{
+					const FNode* Node = QuestNodeMap.Find(Class->NodeIdPropertyMap[PreNode.NodeId]->GetFName());
+					if (Node == nullptr)
+					{
+						continue;
+					}
+					const auto TagNodesPtr = FinishedTagNodeMap.Find(TagName);
+					if (TagNodesPtr == nullptr)
+					{
+						continue;
+					}
+					const FTagNode* NearestTagNode = nullptr;
+					float TestDistanceSquared = FLT_MAX;
+					for (const auto& TagNode : *TagNodesPtr)
+					{
+						const float DistanceSquared = (Node->Widget.Geometry.GetAbsolutePosition() - TagNode.Widget.Geometry.GetAbsolutePosition()).SizeSquared();
+						if (DistanceSquared < TestDistanceSquared)
+						{
+							NearestTagNode = &TagNode;
+						}
+					}
+					if (NearestTagNode)
+					{
+						const FVector2D EndLinkPoint = NearestTagNode->Widget.Geometry.GetAbsolutePosition() + FVector2D{ 0.f, Padding };
+						const UBPNode_GameQuestNodeBase* QuestNode = Node->QuestNode;
+						if (const UBPNode_GameQuestSequenceSingle* SingleNode = Cast<UBPNode_GameQuestSequenceSingle>(Node->QuestNode))
+						{
+							QuestNode = SingleNode->Element;
+						}
+						const UEdGraphPin* EventPin = QuestNode->FindPin(PreNode.EventName);
+						if (EventPin != nullptr)
+						{
+							if (const FPinWidget* PinWidget = EventPinMap.Find(EventPin))
 							{
 								const FVector2D PinSize = PinWidget->Widget.Geometry.GetAbsoluteSize();
 								const FVector2D StartLinkPoint = PinWidget->Widget.Geometry.GetAbsolutePosition() + FVector2D{ PinSize.X, PinSize.Y / 2.f + 6.f * ZoomFactor };
 								DrawConnection(WireLayerID, StartLinkPoint, EndLinkPoint, Params);
 							}
 						}
-						else if (const FNode* StartNode = QuestNodeMap.Find(Class->NodeIdPropertyMap[Element->NodeId]->GetFName()))
+						else
 						{
-							const FVector2D StartLinkPoint = StartNode->Widget.Geometry.GetAbsolutePosition() + FVector2D{ StartNode->Widget.Geometry.GetAbsoluteSize().X, Padding };
+							const FVector2D StartLinkPoint = Node->Widget.Geometry.GetAbsolutePosition() + FVector2D{ Node->Widget.Geometry.GetAbsoluteSize().X, Padding };
 							DrawConnection(WireLayerID, StartLinkPoint, EndLinkPoint, Params);
 						}
-					}
-				}
-				else
-				{
-					const FNode* StartNode = QuestNodeMap.Find(Class->NodeIdPropertyMap[Node->QuestNode->NodeId]->GetFName());
-					if (StartNode == nullptr)
-					{
-						continue;
-					}
-					const FVector2D StartLinkPoint = StartNode->Widget.Geometry.GetAbsolutePosition() + FVector2D{ StartNode->Widget.Geometry.GetAbsoluteSize().X, Padding };
-					for (const uint16 NextNodeId : NextNodes)
-					{
-						const FNode* NextNode = QuestNodeMap.Find(Class->NodeIdPropertyMap[NextNodeId]->GetFName());
-						if (NextNode == nullptr)
-						{
-							continue;
-						}
-						const FVector2D EndLinkPoint = NextNode->Widget.Geometry.GetAbsolutePosition() + FVector2D{ 0.f, Padding };
-						DrawConnection(WireLayerID, StartLinkPoint, EndLinkPoint, Params);
 					}
 				}
 			}

@@ -37,6 +37,7 @@
 4. 子任务序列  
 ![SubQuestSequence](Docs/SubQuestSequence.png)  
 子任务中配置的QuestFinishedTag会创建当序列完成的引脚
+    > 若想实现循环的流程也可用子任务节点激活自身，用递归的任务形式达成流程循环  
 
 C++可配置GameQuestGraphEditorSettings中的序列类型定制序列属性与行为
 
@@ -60,6 +61,8 @@ C++可配置GameQuestGraphEditorSettings中的序列类型定制序列属性与�
 |------------------------|-----------------------|
 | WhenElementActivated   | 当元素激活时触发，例如用来绑定委托     |
 | WhenElementDeactivated | 当元素反激活时触发，例如用来取消绑定的委托 |
+| WhenTick               | Tick事件，需要配置Tiackable为true后才能调用 |
+| WhenForceFinishElement | 使用控制台或者调试按钮强制完成元素时，将状态设置为任务完成时的 |
 
 | 函数及变量                | 说明                                              |
 |----------------------|-------------------------------------------------|
@@ -69,6 +72,8 @@ C++可配置GameQuestGraphEditorSettings中的序列类型定制序列属性与�
 
 * 蓝图拓展继承GameQuestElementScriptable
 * C++拓展继承GameQuestElementBase
+
+> 假如全使用C++的任务元素，可以极大的减少UObject的数量，理想情况一个任务图创建的UObject就是图自身
 
 #### 变量暴露为节点的引脚
 

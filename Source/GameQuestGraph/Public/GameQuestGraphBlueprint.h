@@ -44,17 +44,18 @@ public:
 	TMap<uint16, FStructProperty*> NodeIdPropertyMap;
 	TMap<uint16, TArray<uint16, TInlineAllocator<1>>> NodeToSuccessorMap;
 	TMap<uint16, TArray<uint16, TInlineAllocator<1>>> NodeToPredecessorMap;
-	struct FEventNameToNextNode
+	struct FEventNameNodeId
 	{
 		FName EventName;
-		uint16 NextNode;
-		friend FArchive& operator<<(FArchive& Ar, FEventNameToNextNode& V)
+		uint16 NodeId;
+		friend FArchive& operator<<(FArchive& Ar, FEventNameNodeId& V)
 		{
 			Ar << V.EventName;
-			Ar << V.NextNode;
+			Ar << V.NodeId;
 			return Ar;
 		}
 	};
-	TMap<uint16, TArray<FEventNameToNextNode>> NodeIdEventNameMap;
+	TMap<uint16, TArray<FEventNameNodeId, TInlineAllocator<1>>> NodeIdEventNameMap;
 	TMap<FName, FStructProperty*> FinishedTags;
+	TMap<FName, TArray<FEventNameNodeId, TInlineAllocator<1>>> FinishedTagPreNodesMap;
 };

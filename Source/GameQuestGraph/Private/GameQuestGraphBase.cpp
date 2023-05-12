@@ -672,6 +672,74 @@ void UGameQuestGraphBase::ForceActivateSequenceToServer_Implementation(const uin
 		return;
 	}
 	UE_LOG(LogGameQuest, Verbose, TEXT("ForceActivateSequence %s.%s"), *GetName(), *TargetSequence->GetNodeName().ToString());
+	struct FLocal
+	{
+		UGameQuestGraphBase& Quest;
+		void FinishSequence(const FGameQuestSequenceSingle* SequenceSingle, const FName& EventName) const
+		{
+			FGameQuestElementBase* Element = Quest.GetElementPtr(SequenceSingle->Element);
+			Element->ForceFinishElement(EventName);
+		};
+		void FinishSequence(const FGameQuestSequenceList* SequenceList) const
+		{
+			for (const uint16 ElementId : SequenceList->Elements)
+			{
+				FGameQuestElementBase* Element = Quest.GetElementPtr(ElementId);
+				if (Element->bIsActivated)
+				{
+					Element->FinishElement({}, NAME_None);
+				}
+			}
+		}
+		void FinishSequence(const FGameQuestSequenceSubQuest* SequenceSubQuest, const FName& FinishedTag) const
+		{
+			UGameQuestGraphBase* SubQuestInstance = SequenceSubQuest->SubQuestInstance;
+			if (SubQuestInstance == nullptr)
+			{
+				ensure(SequenceSubQuest->SubQuestClass.LoadSynchronous());
+			}
+			if (!ensure(SubQuestInstance))
+			{
+				return;
+			}
+			const UGameQuestGraphGeneratedClass* SubClass = CastChecked<UGameQuestGraphGeneratedClass>(SubQuestInstance->GetClass());
+			const auto [EventName, ToActivateId] = SubClass->FinishedTagPreNodesMap[FinishedTag][0];
+			if (SubClass->NodeIdPropertyMap[ToActivateId]->Struct->IsChildOf(FGameQuestSequenceBase::StaticStruct()))
+			{
+				SubQuestInstance->ForceActivateSequenceToServer(ToActivateId);
+				const FGameQuestSequenceBase* SubSequence = SubQuestInstance->GetSequencePtr(ToActivateId);
+				if (SubSequence->bIsActivated)
+				{
+					if (const FGameQuestSequenceSingle* SubSequenceSingle = GameQuestCast<FGameQuestSequenceSingle>(SubSequence))
+					{
+						FinishSequence(SubSequenceSingle, EventName);
+					}
+					else if (const FGameQuestSequenceList* SubSequenceList = GameQuestCast<FGameQuestSequenceList>(SubSequence))
+					{
+						FinishSequence(SubSequenceList);
+					}
+					else if (const FGameQuestSequenceSubQuest* SubSequenceSubQuest = GameQuestCast<FGameQuestSequenceSubQuest>(SubSequence))
+					{
+						FinishSequence(SubSequenceSubQuest, EventName);
+					}
+					else
+					{
+						ensure(false);
+					}
+				}
+			}
+			else
+			{
+				SubQuestInstance->ForceActivateBranchToServer(ToActivateId);
+				const FGameQuestElementBase* ElementBranch = SubQuestInstance->GetElementPtr(ToActivateId);
+				if (ElementBranch->bIsActivated)
+				{
+					SubQuestInstance->ForceFinishElementToServer(ToActivateId, EventName);
+				}
+			}
+		}
+	};
+
 	for (int32 Idx = 0; Idx < PendingActivatedIds.Num() - 1; ++Idx)
 	{
 		FGameQuestSequenceBase* Sequence = GetSequencePtr(PendingActivatedIds[Idx]);
@@ -684,17 +752,15 @@ void UGameQuestGraphBase::ForceActivateSequenceToServer_Implementation(const uin
 			return;
 		}
 
-		if (FGameQuestSequenceList* SequenceList = GameQuestCast<FGameQuestSequenceList>(Sequence))
+		if (const FGameQuestSequenceSingle* SequenceSingle = GameQuestCast<FGameQuestSequenceSingle>(Sequence))
 		{
-			for (const uint16 ElementId : SequenceList->Elements)
-			{
-				FGameQuestElementBase* Element = GetElementPtr(ElementId);
-				if (Element->bIsActivated)
-				{
-					Element->FinishElement({}, NAME_None);
-				}
-			}
-			ensure(SequenceList->bIsActivated == false);
+			using FEventNameToNextNode = UGameQuestGraphGeneratedClass::FEventNameNodeId;
+			const FEventNameToNextNode* EventName = Class->NodeIdEventNameMap[SequenceSingle->Element].FindByPredicate([&](const FEventNameToNextNode& E){ return E.NodeId == PendingActivatedIds[Idx + 1]; });
+			FLocal{ *this }.FinishSequence(SequenceSingle, EventName->EventName);
+		}
+		else if (const FGameQuestSequenceList* SequenceList = GameQuestCast<FGameQuestSequenceList>(Sequence))
+		{
+			FLocal{ *this }.FinishSequence(SequenceList);
 		}
 		else if (FGameQuestSequenceBranch* SequenceBranch = GameQuestCast<FGameQuestSequenceBranch>(Sequence))
 		{
@@ -709,19 +775,22 @@ void UGameQuestGraphBase::ForceActivateSequenceToServer_Implementation(const uin
 			ensure(SequenceBranch->bIsBranchesActivated);
 
 			Idx += 1;
-			FGameQuestElementBase* BranchElement = GetElementPtr(PendingActivatedIds[Idx]);
-			using FEventNameToNextNode = UGameQuestGraphGeneratedClass::FEventNameToNextNode;
-			const FEventNameToNextNode* EventName = Class->NodeIdEventNameMap[GetElementId(BranchElement)].FindByPredicate([&](const FEventNameToNextNode& E){ return E.NextNode == PendingActivatedIds[Idx + 1]; });
+			const uint16 ElementId = PendingActivatedIds[Idx];
+			FGameQuestElementBase* BranchElement = GetElementPtr(ElementId);
+			using FEventNameToNextNode = UGameQuestGraphGeneratedClass::FEventNameNodeId;
+			const FEventNameToNextNode* EventName = Class->NodeIdEventNameMap[ElementId].FindByPredicate([&](const FEventNameToNextNode& E){ return E.NodeId == PendingActivatedIds[Idx + 1]; });
 			BranchElement->ForceFinishElement(EventName->EventName);
 		}
-		else if (const FGameQuestSequenceSingle* SequenceSingle = GameQuestCast<FGameQuestSequenceSingle>(Sequence))
+		else if (const FGameQuestSequenceSubQuest* SequenceSubQuest = GameQuestCast<FGameQuestSequenceSubQuest>(Sequence))
 		{
-			FGameQuestElementBase* Element = GetElementPtr(SequenceSingle->Element);
-			using FEventNameToNextNode = UGameQuestGraphGeneratedClass::FEventNameToNextNode;
-			const FEventNameToNextNode* EventName = Class->NodeIdEventNameMap[GetElementId(Element)].FindByPredicate([&](const FEventNameToNextNode& E){ return E.NextNode == PendingActivatedIds[Idx + 1]; });
-			Element->ForceFinishElement(EventName->EventName);
+			using FEventNameToNextNode = UGameQuestGraphGeneratedClass::FEventNameNodeId;
+			const FEventNameToNextNode* FinishedTagName = Class->NodeIdEventNameMap[PendingActivatedIds[Idx]].FindByPredicate([&](const FEventNameToNextNode& E){ return E.NodeId == PendingActivatedIds[Idx + 1]; });
+			FLocal{ *this }.FinishSequence(SequenceSubQuest, FinishedTagName->EventName);
 		}
-		ensure(Sequence->bIsActivated == false);
+		else
+		{
+			ensure(false);
+		}
 	}
 	{
 		ensure(GetSequencePtr(PendingActivatedIds[PendingActivatedIds.Num() - 1])->GetSequenceState() != FGameQuestSequenceBase::EState::Deactivated);

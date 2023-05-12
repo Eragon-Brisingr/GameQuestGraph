@@ -27,6 +27,7 @@ void UGameQuestGraphGeneratedClass::Serialize(FArchive& Ar)
 	Ar << NodeIdLogicsMap;
 	Ar << NodeToSuccessorMap;
 	Ar << NodeIdEventNameMap;
+	Ar << FinishedTagPreNodesMap;
 }
 
 void UGameQuestGraphGeneratedClass::PostQuestCDOInitProperties()

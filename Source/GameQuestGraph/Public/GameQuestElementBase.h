@@ -142,6 +142,7 @@ protected:
 	void WhenPreElementDeactivated();
 	UFUNCTION(BlueprintNativeEvent, Category = "GameQuest")
 	void WhenTick(float DeltaSeconds);
+	// when cheat finished element, can set to finished state
 	UFUNCTION(BlueprintNativeEvent, Category = "GameQuest")
 	void WhenForceFinishElement(const FName& EventName);
 
@@ -192,7 +193,6 @@ public:
 #endif
 
 #if WITH_EDITOR
-	void GatherDependencies(TSet<TWeakObjectPtr<UBlueprint>>& InDependencies) const override;
 	TSubclassOf<UGameQuestGraphBase> GetSupportQuestGraph() const override;
 #endif
 };

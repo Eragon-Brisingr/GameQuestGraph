@@ -491,7 +491,11 @@ void UGameQuestElementScriptable::WhenElementDeactivated_Implementation() {}
 void UGameQuestElementScriptable::WhenPostElementActivated_Implementation() {}
 void UGameQuestElementScriptable::WhenPreElementDeactivated_Implementation() {}
 void UGameQuestElementScriptable::WhenTick_Implementation(float DeltaSeconds) {}
-void UGameQuestElementScriptable::WhenForceFinishElement_Implementation(const FName& EventName) {}
+
+void UGameQuestElementScriptable::WhenForceFinishElement_Implementation(const FName& EventName)
+{
+	Owner->FinishElementByName(EventName);
+}
 
 void FGameQuestElementScript::WhenQuestInitProperties(const FStructProperty* Property)
 {
@@ -560,23 +564,6 @@ TArray<FName, TInlineAllocator<1>> FGameQuestElementScript::GetActivatedFinishEv
 #endif
 
 #if WITH_EDITOR
-void FGameQuestElementScript::GatherDependencies(TSet<TWeakObjectPtr<UBlueprint>>& InDependencies) const
-{
-	if (Instance == nullptr)
-	{
-		return;
-	}
-	if (UBlueprint* Blueprint = Cast<UBlueprint>(Instance->GetClass()->ClassGeneratedBy))
-	{
-		bool bIsAlreadyInSet = false;
-		InDependencies.Add(Blueprint, &bIsAlreadyInSet);
-		if (bIsAlreadyInSet == false)
-		{
-			Blueprint->GatherDependencies(InDependencies);
-		}
-	}
-}
-
 TSubclassOf<UGameQuestGraphBase> FGameQuestElementScript::GetSupportQuestGraph() const
 {
 	return Instance ? Instance->SupportType.Get() : nullptr;
