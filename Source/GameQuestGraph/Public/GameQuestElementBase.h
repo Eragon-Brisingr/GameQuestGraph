@@ -149,6 +149,8 @@ protected:
 	void GetEvaluateGraphExposedInputs() const { Owner->GetEvaluateGraphExposedInputs(); }
 	UFUNCTION(BlueprintCallable, Category = "GameQuest")
 	UGameQuestGraphBase* GetOwnerQuest() const { return Owner->OwnerQuest; }
+	UFUNCTION(BlueprintCallable, Category = "GameQuest")
+	AActor* GetOwnerActor() const;
 	UFUNCTION(BlueprintCallable, CustomThunk, Category = "GameQuest")
 	void FinishElement(const FGameQuestFinishEvent& Event);
 	DECLARE_FUNCTION(execFinishElement);

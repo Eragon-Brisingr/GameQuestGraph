@@ -35,7 +35,7 @@ public:
 	UFUNCTION()
 	void OnRep_FinishedQuests();
 private:
-	void StartQuest(UGameQuestGraphBase* StartedQuest);
+	void PostStartQuest(UGameQuestGraphBase* StartedQuest);
 	void PostFinishQuest(UGameQuestGraphBase* FinishedQuest);
 protected:
 	virtual void WhenQuestStarted(UGameQuestGraphBase* FinishedQuest) {}

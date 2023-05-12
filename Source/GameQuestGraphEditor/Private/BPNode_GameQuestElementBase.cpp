@@ -682,6 +682,11 @@ UScriptStruct* UBPNode_GameQuestElementBranchList::GetBaseNodeStruct() const
 	return FGameQuestElementBranchList::StaticStruct();
 }
 
+UScriptStruct* UBPNode_GameQuestElementBranchList::GetNodeStruct() const
+{
+	return GetDefault<UGameQuestGraphEditorSettings>()->ElementBranchListType.Get();
+}
+
 void UBPNode_GameQuestElementBranchList::AddElement(UBPNode_GameQuestElementBase* Element)
 {
 	QuestListAddElement(this, Element);
@@ -875,6 +880,17 @@ bool UBPNode_GameQuestElementScript::IsActionFilteredOut(FBlueprintActionFilter 
 		}
 	}
 	return false;
+}
+
+bool UBPNode_GameQuestElementScript::HasExternalDependencies(TArray<UStruct*>* OptionalOutput) const
+{
+	bool Res = Super::HasExternalDependencies(OptionalOutput);
+	Res |= ScriptInstance != nullptr;
+	if (OptionalOutput)
+	{
+		OptionalOutput->AddUnique(ScriptInstance->GetClass());
+	}
+	return Res;
 }
 
 bool UBPNode_GameQuestElementScript::HasEvaluateActionParams() const

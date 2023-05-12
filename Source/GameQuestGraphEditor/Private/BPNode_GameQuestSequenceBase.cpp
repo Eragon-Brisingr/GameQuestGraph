@@ -5,6 +5,7 @@
 #include "BlueprintActionDatabaseRegistrar.h"
 #include "BlueprintNodeSpawner.h"
 #include "BPNode_GameQuestElementBase.h"
+#include "BPNode_GameQuestEntryEvent.h"
 #include "BPNode_GameQuestListSequenceUtils.h"
 #include "GameQuestElementBase.h"
 #include "GameQuestGraphBase.h"
@@ -680,6 +681,10 @@ UScriptStruct* UBPNode_GameQuestSequenceBranch::GetNodeStruct() const
 	return GetDefault<UGameQuestGraphEditorSettings>()->SequenceBranchType.Get();
 }
 
+UBPNode_GameQuestSequenceSubQuest::UBPNode_GameQuestSequenceSubQuest()
+	: CustomEntryName(GET_FUNCTION_NAME_CHECKED(UGameQuestGraphBase, DefaultEntry))
+{}
+
 void UBPNode_GameQuestSequenceSubQuest::AllocateDefaultPins()
 {
 	Super::AllocateDefaultPins();
@@ -738,12 +743,19 @@ void UBPNode_GameQuestSequenceSubQuest::PostEditChangeProperty(FPropertyChangedE
 		if (FGameQuestSequenceSubQuest* SubQuestSequence = StructNodeInstance.GetMutablePtr<FGameQuestSequenceSubQuest>())
 		{
 			SubQuestSequence->SubQuestClass = SubQuestClass;
-		};
+		}
 		ReconstructNode();
 	}
 	else if (PropertyName == GET_MEMBER_NAME_CHECKED(ThisClass, SubQuestShowPins))
 	{
 		ReconstructNode();
+	}
+	else if (PropertyName == GET_MEMBER_NAME_CHECKED(ThisClass, CustomEntryName))
+	{
+		if (FGameQuestSequenceSubQuest* SubQuestSequence = StructNodeInstance.GetMutablePtr<FGameQuestSequenceSubQuest>())
+		{
+			SubQuestSequence->CustomEntryName = CustomEntryName == GET_FUNCTION_NAME_CHECKED(UGameQuestGraphBase, DefaultEntry) ? NAME_None : CustomEntryName;
+		}
 	}
 }
 
@@ -777,6 +789,11 @@ void UBPNode_GameQuestSequenceSubQuest::ExpandNode(FKismetCompilerContext& Compi
 		CompilerContext.MessageLog.Error(TEXT("@@SubQuestClass is none"), this);
 		return;
 	}
+	if (SubQuestSequence->CustomEntryName != NAME_None && Class->FindFunctionByName(SubQuestSequence->CustomEntryName) == nullptr)
+	{
+		CompilerContext.MessageLog.Error(TEXT("@@Custom Entry@@not find"), this, *SubQuestSequence->CustomEntryName.ToString());
+		return;
+	}
 	const FName RefVarName = GetRefVarName();
 	for (UEdGraphPin* Pin : Pins)
 	{
@@ -795,6 +812,17 @@ void UBPNode_GameQuestSequenceSubQuest::ExpandNode(FKismetCompilerContext& Compi
 		PostFinishTagEvent->AllocateDefaultPins();
 		CompilerContext.MovePinLinksToIntermediate(*FinishPin, *PostFinishTagEvent->FindPinChecked(UEdGraphSchema_K2::PN_Then));
 	}
+}
+
+bool UBPNode_GameQuestSequenceSubQuest::HasExternalDependencies(TArray<UStruct*>* OptionalOutput) const
+{
+	bool Res = Super::HasExternalDependencies(OptionalOutput);
+	Res |= SubQuestClass != nullptr;
+	if (OptionalOutput)
+	{
+		OptionalOutput->AddUnique(SubQuestClass);
+	}
+	return Res;
 }
 
 bool UBPNode_GameQuestSequenceSubQuest::HasSubQuestExposePin() const
@@ -902,6 +930,34 @@ UScriptStruct* UBPNode_GameQuestSequenceSubQuest::GetBaseNodeStruct() const
 UScriptStruct* UBPNode_GameQuestSequenceSubQuest::GetNodeStruct() const
 {
 	return GetDefault<UGameQuestGraphEditorSettings>()->SequenceSubQuestType.Get();
+}
+
+TArray<FString> UBPNode_GameQuestSequenceSubQuest::GetCustomEntryNames()
+{
+	TArray<FString> Res{ GET_FUNCTION_NAME_STRING_CHECKED(UGameQuestGraphBase, DefaultEntry) };
+	if (SubQuestClass == nullptr)
+	{
+		return Res;
+	}
+	const UGameQuestGraphBlueprint* Blueprint = Cast<UGameQuestGraphBlueprint>(SubQuestClass->ClassGeneratedBy);
+	if (Blueprint == nullptr || Blueprint->GameQuestGraph == nullptr)
+	{
+		return Res;
+	}
+	for (const UEdGraphNode* Node : Blueprint->GameQuestGraph->Nodes)
+	{
+		const UBPNode_GameQuestEntryEvent* EntryEvent = Cast<UBPNode_GameQuestEntryEvent>(Node);
+		if (EntryEvent == nullptr)
+		{
+			continue;
+		}
+		if (SubQuestClass->FindFunctionByName(EntryEvent->CustomFunctionName) == nullptr)
+		{
+			continue;
+		}
+		Res.AddUnique(EntryEvent->CustomFunctionName.ToString());
+	}
+	return Res;
 }
 
 #undef LOCTEXT_NAMESPACE

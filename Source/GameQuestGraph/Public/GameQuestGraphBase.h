@@ -68,9 +68,6 @@ private:
 	void ReactiveQuest();
 	void DeactivateQuest();
 
-	void InterruptSequence(FGameQuestSequenceBase& Sequence);
-	void InterruptBranch(FGameQuestElementBase& Element);
-
 	void PreSequenceActivated(FGameQuestSequenceBase* Sequence, uint16 SequenceId);
 	void PostSequenceDeactivated(FGameQuestSequenceBase* Sequence, uint16 SequenceId);
 protected:
@@ -94,12 +91,13 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "GameQuest")
 	void DefaultEntry();
 
-	UFUNCTION(BlueprintCallable, CustomThunk, Category = "GameQuest", meta = (CustomStructureParam = Sequence))
-	void InterruptSequenceByRef(UPARAM(Ref) FGameQuestSequenceBase& Sequence);
-	DECLARE_FUNCTION(execInterruptSequenceByRef);
-	UFUNCTION(BlueprintCallable, CustomThunk, Category = "GameQuest", meta = (CustomStructureParam = Branch))
-	void InterruptBranchByRef(UPARAM(Ref) FGameQuestElementBase& Branch);
-	DECLARE_FUNCTION(execInterruptBranchByRef);
+	UFUNCTION(BlueprintCallable, Category = "GameQuest")
+	void InterruptQuest();
+	void InterruptSequence(FGameQuestSequenceBase& Sequence);
+	void InterruptBranch(FGameQuestElementBase& Element);
+	UFUNCTION(BlueprintCallable, CustomThunk, Category = "GameQuest", meta = (CustomStructureParam = Node))
+	void InterruptNodeByRef(UPARAM(Ref) FGameQuestNodeBase& Node);
+	DECLARE_FUNCTION(execInterruptNodeByRef);
 
 	UFUNCTION(BlueprintCallable, Category = "GameQuest")
 	void GetEvaluateGraphExposedInputs();

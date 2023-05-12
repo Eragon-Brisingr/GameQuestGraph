@@ -46,8 +46,8 @@ FGameQuestGraphSlateStyle::FGameQuestGraphSlateStyle()
 	Style->Set("GroupBorderLight", new BOX_BRUSH("GroupBorderLight", FMargin(0.25f)));
 	Style->Set("ThinLine.Horizontal", new IMAGE_BRUSH("ThinLine_Horizontal", FVector2D(11, 2), FLinearColor::White, ESlateBrushTileType::Horizontal));
 
-	Style->Set("ClassThumbnail.GameQuestGraphBase", new IMAGE_BRUSH("GameQuestIcon_128x", FVector2D(128.f, 128.f)));
-	Style->Set("ClassThumbnail.GameQuestElementScriptable", new IMAGE_BRUSH("GameQuestElementIcon_128x", FVector2D(128.f, 128.f)));
+	Style->Set("ClassThumbnail.GameQuestGraphBase", new IMAGE_BRUSH("GameQuestIcon_256x", FVector2D(128.f, 128.f)));
+	Style->Set("ClassThumbnail.GameQuestElementScriptable", new IMAGE_BRUSH("GameQuestElementIcon_256x", FVector2D(128.f, 128.f)));
 
 	Style->Set("Graph.Quest", new IMAGE_BRUSH("Quest_64x", FVector2D(16.f, 16.f)));
 	Style->Set("Graph.Event.Start", new IMAGE_BRUSH("QuestStart_64x", FVector2D(16.f, 16.f)));

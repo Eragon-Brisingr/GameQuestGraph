@@ -22,5 +22,7 @@ public:
 	UPROPERTY(Config)
 	TSoftObjectPtr<UScriptStruct> SequenceSubQuestType;
 	UPROPERTY(Config)
+	TSoftObjectPtr<UScriptStruct> ElementBranchListType;
+	UPROPERTY(Config)
 	TSoftObjectPtr<UScriptStruct> ElementScriptType;
 };

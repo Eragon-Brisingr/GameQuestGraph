@@ -64,12 +64,16 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetQuest(UGameQuestGraphBase* NewQuest);
 
+	// Must Implement GameQuestTreeListElement Interface
 	UPROPERTY(EditAnywhere, meta = (MustImplement = "/Script/GameQuestGraph.GameQuestTreeListElement"))
 	TSubclassOf<UUserWidget> ElementWidget;
+	// Must Implement GameQuestTreeListSequence Interface
 	UPROPERTY(EditAnywhere, meta = (MustImplement = "/Script/GameQuestGraph.GameQuestTreeListSequence"))
 	TSubclassOf<UUserWidget> SequenceHeader;
+	// Must Implement GameQuestTreeListSubQuest Interface
 	UPROPERTY(EditAnywhere, meta = (MustImplement = "/Script/GameQuestGraph.GameQuestTreeListSubQuest"))
 	TSubclassOf<UUserWidget> SubQuestHeader;
+	// Must Implement GameQuestTreeListFinishedTag Interface
 	UPROPERTY(EditAnywhere, meta = (MustImplement = "/Script/GameQuestGraph.GameQuestTreeListFinishedTag"))
 	TSubclassOf<UUserWidget> FinishedTagWidget;
 

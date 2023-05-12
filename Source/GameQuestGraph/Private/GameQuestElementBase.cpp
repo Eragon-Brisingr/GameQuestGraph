@@ -522,6 +522,11 @@ bool FGameQuestElementScript::ReplicateSubobject(UActorChannel* Channel, FOutBun
 	return WroteSomething;
 }
 
+AActor* UGameQuestElementScriptable::GetOwnerActor() const
+{
+	return GetTypedOuter<AActor>();
+}
+
 DEFINE_FUNCTION(UGameQuestElementScriptable::execFinishElement)
 {
 	Stack.StepCompiledIn<FProperty>(nullptr);

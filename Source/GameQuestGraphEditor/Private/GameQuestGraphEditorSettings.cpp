@@ -12,5 +12,6 @@ UGameQuestGraphEditorSettings::UGameQuestGraphEditorSettings()
 	SequenceListType = FGameQuestSequenceList::StaticStruct();
 	SequenceBranchType = FGameQuestSequenceBranch::StaticStruct();
 	SequenceSubQuestType = FGameQuestSequenceSubQuest::StaticStruct();
+	ElementBranchListType = FGameQuestElementBranchList::StaticStruct();
 	ElementScriptType = FGameQuestElementScript::StaticStruct();
 }

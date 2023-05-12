@@ -21,6 +21,11 @@ void FGameQuestSequenceBase::TryActivateSequence()
 {
 	check(OwnerQuest);
 
+	if (!ensure(OwnerQuest->bIsActivated))
+	{
+		return;
+	}
+
 	using namespace Context;
 	const uint16 SequenceId = OwnerQuest->GetSequenceId(this);
 
@@ -551,7 +556,22 @@ void FGameQuestSequenceSubQuest::WhenSequenceActivated(bool bHasAuthority)
 			using namespace Context;
 			GetEvaluateGraphExposedInputs(bHasAuthority);
 			TGuardValue FinishedSequenceGuard{ CurrentFinishedSequenceId, GameQuest::IdNone };
-			SubQuestInstance->DefaultEntry();
+			if (CustomEntryName == NAME_None)
+			{
+				SubQuestInstance->DefaultEntry();
+			}
+			else
+			{
+				UFunction* CustomEntry = SubQuestInstance->FindFunction(CustomEntryName);
+				if (ensure(CustomEntry))
+				{
+					SubQuestInstance->ProcessEvent(CustomEntry, nullptr);
+				}
+				else
+				{
+					UE_LOG(LogGameQuest, Error, TEXT("%s can not find custom quest entry %s"), *SubQuestInstance->GetClass()->GetName(), *CustomEntryName.ToString());
+				}
+			}
 			MarkNodeNetDirty();
 		};
 		if (SubQuestClass.IsPending())

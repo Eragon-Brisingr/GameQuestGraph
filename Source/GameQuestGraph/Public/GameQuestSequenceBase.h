@@ -204,6 +204,9 @@ public:
 	TObjectPtr<UGameQuestGraphBase> SubQuestInstance;
 
 	UPROPERTY()
+	FName CustomEntryName = NAME_None;
+
+	UPROPERTY()
 	TArray<FGameQuestSequenceSubQuestFinishedTag> FinishedTags;
 
 	void WhenSequenceActivated(bool bHasAuthority) override;

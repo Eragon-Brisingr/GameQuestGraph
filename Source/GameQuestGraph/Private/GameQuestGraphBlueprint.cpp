@@ -18,23 +18,6 @@ void UGameQuestGraphBlueprint::GetReparentingRules(TSet<const UClass*>& AllowedC
 
 	AllowedChildrenOfClasses.Add(UGameQuestGraphBase::StaticClass());
 }
-
-void UGameQuestGraphBlueprint::GatherDependencies(TSet<TWeakObjectPtr<UBlueprint>>& InDependencies) const
-{
-	Super::GatherDependencies(InDependencies);
-
-	const UGameQuestGraphGeneratedClass* Class = Cast<UGameQuestGraphGeneratedClass>(GeneratedClass);
-	if (Class == nullptr)
-	{
-		return;
-	}
-	const UGameQuestGraphBase* CDO = Class->GetDefaultObject<UGameQuestGraphBase>();
-	for (const auto& [_, Property] : Class->NodeIdPropertyMap)
-	{
-		const FGameQuestNodeBase* QuestNode = Property->ContainerPtrToValuePtr<FGameQuestNodeBase>(CDO);
-		QuestNode->GatherDependencies(InDependencies);
-	}
-}
 #endif
 
 void UGameQuestGraphGeneratedClass::Serialize(FArchive& Ar)

@@ -76,6 +76,7 @@ public:
 	TArray<EGameQuestSequenceLogic> ElementLogics;
 
 	UScriptStruct* GetBaseNodeStruct() const override;
+	UScriptStruct* GetNodeStruct() const override;
 
 	void AddElement(UBPNode_GameQuestElementBase* Element);
 	void InsertElementNode(UBPNode_GameQuestElementBase* Element, int32 Idx);
@@ -107,6 +108,7 @@ public:
 	void GetMenuActions(FBlueprintActionDatabaseRegistrar& ActionRegistrar) const override;
 	UObject* GetJumpTargetForDoubleClick() const override;
 	bool IsActionFilteredOut(FBlueprintActionFilter const& Filter) override;
+	bool HasExternalDependencies(TArray<UStruct*>* OptionalOutput) const override;
 
 	bool HasEvaluateActionParams() const override;
 	void ExpandNodeForEvaluateActionParams(UEdGraphPin*& AuthorityThenPin, UEdGraphPin*& ClientThenPin, FKismetCompilerContext& CompilerContext, UEdGraph* SourceGraph) override;

@@ -28,6 +28,10 @@ FText UBPNode_GameQuestEntryEvent::GetNodeTitle(ENodeTitleType::Type TitleType) 
 		{
 			FunctionName = UEdGraphSchema_K2::GetFriendlySignatureName(Function);
 		}
+		if (TitleType == ENodeTitleType::EditableTitle || TitleType == ENodeTitleType::ListView)
+		{
+			return FunctionName;
+		}
 		return FText::Format(LOCTEXT("QuestEntryEventName", "Event {0}\nQuest Entry Event"), FunctionName);
 	}
 	if (TitleType == ENodeTitleType::EditableTitle || TitleType == ENodeTitleType::ListView)
@@ -50,17 +54,17 @@ FSlateIcon UBPNode_GameQuestEntryEvent::GetIconAndTint(FLinearColor& OutColor) c
 
 bool UBPNode_GameQuestEntryEvent::CanUserDeleteNode() const
 {
-	return bOverrideFunction == false;
+	return bOverrideFunction == false || EventReference.GetMemberName() != GET_FUNCTION_NAME_CHECKED(UGameQuestGraphBase, DefaultEntry);
 }
 
 bool UBPNode_GameQuestEntryEvent::CanDuplicateNode() const
 {
-	return bOverrideFunction == false;
+	return bOverrideFunction == false || EventReference.GetMemberName() != GET_FUNCTION_NAME_CHECKED(UGameQuestGraphBase, DefaultEntry);
 }
 
 bool UBPNode_GameQuestEntryEvent::GetCanRenameNode() const
 {
-	return bOverrideFunction == false;
+	return bOverrideFunction == false || EventReference.GetMemberName() != GET_FUNCTION_NAME_CHECKED(UGameQuestGraphBase, DefaultEntry);
 }
 
 TSharedPtr<INameValidatorInterface> UBPNode_GameQuestEntryEvent::MakeNameValidator() const

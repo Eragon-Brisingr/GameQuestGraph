@@ -18,7 +18,6 @@ public:
 #if WITH_EDITOR
 	UClass* GetBlueprintClass() const override;
 	void GetReparentingRules(TSet<const UClass*>& AllowedChildrenOfClasses, TSet<const UClass*>& DisallowedChildrenOfClasses) const override;
-	void GatherDependencies(TSet<TWeakObjectPtr<UBlueprint>>& InDependencies) const override;
 #endif
 
 #if WITH_EDITORONLY_DATA

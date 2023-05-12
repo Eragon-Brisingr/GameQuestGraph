@@ -202,26 +202,15 @@ public:
 								.HAlign(HAlign_Fill)
 								.VAlign(VAlign_Fill)
 								[
-									SNew(SImage)
+									SNew(SButton)
+									.ButtonStyle(FAppStyle::Get(), "HoverHintOnly")
 									.ToolTipText_Lambda([this, Idx]()
 									{
 										const EGameQuestSequenceLogic Logic = List->ElementLogics[Idx - 1];
 										return Logic == EGameQuestSequenceLogic::And ? LOCTEXT("SetElementOrLogic", "Set Element Or Logic") : LOCTEXT("SetElementAndLogic", "Set Element And Logic");
 									})
-									.Image_Lambda([this, Idx]
+									.OnClicked_Lambda([this, Idx]
 									{
-										const ISlateStyle& SlateStyle = FGameQuestGraphSlateStyle::Get();
-										const EGameQuestSequenceLogic Logic = List->ElementLogics[Idx - 1];
-										static const FSlateBrush* AndBrush = SlateStyle.GetBrush(TEXT("ElementLogicAnd"));
-										static const FSlateBrush* OrBrush = SlateStyle.GetBrush(TEXT("ElementLogicOr"));
-										return Logic == EGameQuestSequenceLogic::And ? AndBrush : OrBrush;
-									})
-									.OnMouseButtonDown_Lambda([this, Idx](const FGeometry&, const FPointerEvent& PointerEvent)
-									{
-										if (PointerEvent.IsMouseButtonDown(EKeys::LeftMouseButton) == false)
-										{
-											return FReply::Handled();
-										}
 										const FScopedTransaction Transaction(LOCTEXT("ModifyElementLogic", "ModifyElementLogic"));
 										List->Modify();
 
@@ -239,6 +228,17 @@ public:
 										}
 										return EVisibility::Visible;
 									})
+									[
+										SNew(SImage)
+										.Image_Lambda([this, Idx]
+										{
+											const ISlateStyle& SlateStyle = FGameQuestGraphSlateStyle::Get();
+											const EGameQuestSequenceLogic Logic = List->ElementLogics[Idx - 1];
+											static const FSlateBrush* AndBrush = SlateStyle.GetBrush(TEXT("ElementLogicAnd"));
+											static const FSlateBrush* OrBrush = SlateStyle.GetBrush(TEXT("ElementLogicOr"));
+											return Logic == EGameQuestSequenceLogic::And ? AndBrush : OrBrush;
+										})
+									]
 								]
 								+ SOverlay::Slot()
 								.Padding(0.f)

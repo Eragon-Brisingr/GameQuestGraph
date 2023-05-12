@@ -122,7 +122,7 @@ void UGameQuestComponent::OnRep_FinishedQuests()
 	PreFinishedQuests = ::MoveTemp(FinishedQuestsSet);
 }
 
-void UGameQuestComponent::StartQuest(UGameQuestGraphBase* StartedQuest)
+void UGameQuestComponent::PostStartQuest(UGameQuestGraphBase* StartedQuest)
 {
 	WhenQuestStarted(StartedQuest);
 	WhenQuestActivated(StartedQuest);

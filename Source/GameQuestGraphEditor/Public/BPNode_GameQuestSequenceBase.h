@@ -119,11 +119,14 @@ class GAMEQUESTGRAPHEDITOR_API UBPNode_GameQuestSequenceSubQuest final : public 
 {
 	GENERATED_BODY()
 public:
+	UBPNode_GameQuestSequenceSubQuest();
+
 	void AllocateDefaultPins() override;
 	FSlateIcon GetIconAndTint(FLinearColor& OutColor) const override;
 	void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	UObject* GetJumpTargetForDoubleClick() const override;
 	void ExpandNode(FKismetCompilerContext& CompilerContext, UEdGraph* SourceGraph) override;
+	bool HasExternalDependencies(TArray<UStruct*>* OptionalOutput) const override;
 
 	bool HasSubQuestExposePin() const;
 	bool HasEvaluateActionParams() const override;
@@ -133,6 +136,10 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Quest", meta = (BlueprintBaseOnly))
 	TSubclassOf<UGameQuestGraphBase> SubQuestClass;
+	UPROPERTY(EditAnywhere, Category = "Quest", meta = (GetOptions = GetCustomEntryNames))
+	FName CustomEntryName;
+	UFUNCTION()
+	TArray<FString> GetCustomEntryNames();
 	UPROPERTY(EditAnywhere, Category = "Quest", EditFixedSize, meta = (ReadOnlyKeys, DisplayName = "Expose Pins"))
 	TMap<FName, bool> SubQuestShowPins;
 };

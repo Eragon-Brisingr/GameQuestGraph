@@ -602,6 +602,16 @@ void UBPNode_GameQuestNodeBase::JumpToDefinition() const
 	}
 }
 
+bool UBPNode_GameQuestNodeBase::HasExternalDependencies(TArray<UStruct*>* OptionalOutput) const
+{
+	const UScriptStruct* ScriptStruct = StructNodeInstance.GetScriptStruct();
+	if (OptionalOutput && ScriptStruct)
+	{
+		OptionalOutput->AddUnique(const_cast<UScriptStruct*>(ScriptStruct));
+	}
+	return ScriptStruct != nullptr;
+}
+
 bool UBPNode_GameQuestNodeBase::IsUniqueRefVarName(const UBlueprint* Blueprint, const FName& Name)
 {
 	return FindNodeByRefVarName(Blueprint, Name) == nullptr;

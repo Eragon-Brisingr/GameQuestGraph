@@ -75,6 +75,7 @@ public:
 	FText GetTooltipText() const override;
 	bool CanJumpToDefinition() const override { return true; }
 	void JumpToDefinition() const override;
+	bool HasExternalDependencies(TArray<UStruct*>* OptionalOutput) const override;
 
 	UPROPERTY(EditAnywhere, Category=PinOptions, EditFixedSize)
 	TArray<FOptionalPinFromProperty> ShowPinForProperties;

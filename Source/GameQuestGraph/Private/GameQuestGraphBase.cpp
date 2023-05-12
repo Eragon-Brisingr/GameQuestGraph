@@ -10,6 +10,17 @@
 #include "GameQuestSequenceBase.h"
 #include "Net/UnrealNetwork.h"
 
+TAutoConsoleVariable<bool> CVarGameQuestEnableCheat
+{
+	TEXT("GameQuest.EnableCheat"),
+#if UE_BUILD_SHIPPING
+	false,
+#else
+	true,
+#endif
+	TEXT("Enable cheat, e.g. console command finish quest element")
+};
+
 void UGameQuestGraphBase::PostInitProperties()
 {
 	Super::PostInitProperties();
@@ -263,6 +274,101 @@ void UGameQuestGraphBase::DeactivateQuest()
 	}
 }
 
+void UGameQuestGraphBase::PreSequenceActivated(FGameQuestSequenceBase* Sequence, uint16 SequenceId)
+{
+	OnPreSequenceActivatedNative.Broadcast(Sequence, SequenceId);
+	WhenPreSequenceActivated(Sequence, SequenceId);
+}
+
+void UGameQuestGraphBase::PostSequenceDeactivated(FGameQuestSequenceBase* Sequence, uint16 SequenceId)
+{
+	OnPostSequenceDeactivatedNative.Broadcast(Sequence, SequenceId);
+	WhenPostSequenceDeactivated(Sequence, SequenceId);
+}
+
+FGameQuestSequenceBase* UGameQuestGraphBase::GetSequencePtr(uint16 Id) const
+{
+	UGameQuestGraphGeneratedClass* Class = CastChecked<UGameQuestGraphGeneratedClass>(GetClass());
+	const FStructProperty* SequenceProperty = Class->NodeIdPropertyMap[Id];
+	check(SequenceProperty->Struct->IsChildOf(FGameQuestSequenceBase::StaticStruct()));
+	const FGameQuestSequenceBase* Sequence = SequenceProperty->ContainerPtrToValuePtr<FGameQuestSequenceBase>(this);
+	return const_cast<FGameQuestSequenceBase*>(Sequence);
+}
+
+FGameQuestElementBase* UGameQuestGraphBase::GetElementPtr(uint16 Id) const
+{
+	UGameQuestGraphGeneratedClass* Class = CastChecked<UGameQuestGraphGeneratedClass>(GetClass());
+	const FStructProperty* ElementProperty = Class->NodeIdPropertyMap[Id];
+	check(ElementProperty->Struct->IsChildOf(FGameQuestElementBase::StaticStruct()));
+	const FGameQuestElementBase* Element = ElementProperty->ContainerPtrToValuePtr<FGameQuestElementBase>(this);
+	return const_cast<FGameQuestElementBase*>(Element);
+}
+
+const GameQuest::FLogicList* UGameQuestGraphBase::GetLogicList(const FGameQuestNodeBase* Node) const
+{
+	UGameQuestGraphGeneratedClass* Class = CastChecked<UGameQuestGraphGeneratedClass>(GetClass());
+	return &Class->NodeIdLogicsMap[Class->NodeNameIdMap[Node->GetNodeName()]];
+}
+
+uint16 UGameQuestGraphBase::GetSequenceId(const FGameQuestSequenceBase* Sequence) const
+{
+	UGameQuestGraphGeneratedClass* Class = CastChecked<UGameQuestGraphGeneratedClass>(GetClass());
+	return Class->NodeNameIdMap[Sequence->GetNodeName()];
+}
+
+uint16 UGameQuestGraphBase::GetElementId(const FGameQuestElementBase* Element) const
+{
+	UGameQuestGraphGeneratedClass* Class = CastChecked<UGameQuestGraphGeneratedClass>(GetClass());
+	return Class->NodeNameIdMap[Element->GetNodeName()];
+}
+
+TArray<FName> UGameQuestGraphBase::GetFinishedTagNames() const
+{
+	const UGameQuestGraphGeneratedClass* Class = CastChecked<UGameQuestGraphGeneratedClass>(GetClass());
+	TArray<FName> FinishedTags;
+	for (const auto& [Name, _] : Class->FinishedTags)
+	{
+		FinishedTags.Add(Name);
+	}
+	return FinishedTags;
+}
+
+const FGameQuestFinishedTag* UGameQuestGraphBase::GetFinishedTag(const FName& Name) const
+{
+	const UGameQuestGraphGeneratedClass* Class = CastChecked<UGameQuestGraphGeneratedClass>(GetClass());
+	const FStructProperty* FinishedTagProperty = Class->FinishedTags.FindRef(Name);
+	if (FinishedTagProperty == nullptr)
+	{
+		return nullptr;
+	}
+	return FinishedTagProperty->ContainerPtrToValuePtr<FGameQuestFinishedTag>(this);
+}
+
+void UGameQuestGraphBase::BindingFinishedTags()
+{
+	const UGameQuestGraphGeneratedClass* Class = CastChecked<UGameQuestGraphGeneratedClass>(GetClass());
+	for (const auto& [Name, StructProperty] : Class->FinishedTags)
+	{
+		UFunction* Event = Owner->GetClass()->FindFunctionByName(FGameQuestFinishedTag::MakeEventName(OwnerNode->GetNodeName(), Name));
+		FGameQuestFinishedTag* FinishedTag = StructProperty->ContainerPtrToValuePtr<FGameQuestFinishedTag>(this);
+		FinishedTag->Event = Event;
+	}
+}
+
+void UGameQuestGraphBase::InterruptQuest()
+{
+	if (!ensure(bIsActivated))
+	{
+		return;
+	}
+	for (const uint16 SequenceId : ActivatedSequences)
+	{
+		FGameQuestSequenceBase* Sequence = GetSequencePtr(SequenceId);
+		Sequence->DeactivateSequence(SequenceId);
+	}
+	InvokeInterruptQuest();
+}
+
 struct FInterruptNextActivateSequence
 {
 	UGameQuestGraphBase& Quest;
@@ -367,88 +473,7 @@ void UGameQuestGraphBase::InterruptBranch(FGameQuestElementBase& Element)
 	}
 }
 
-void UGameQuestGraphBase::PreSequenceActivated(FGameQuestSequenceBase* Sequence, uint16 SequenceId)
-{
-	OnPreSequenceActivatedNative.Broadcast(Sequence, SequenceId);
-	WhenPreSequenceActivated(Sequence, SequenceId);
-}
-
-void UGameQuestGraphBase::PostSequenceDeactivated(FGameQuestSequenceBase* Sequence, uint16 SequenceId)
-{
-	OnPostSequenceDeactivatedNative.Broadcast(Sequence, SequenceId);
-	WhenPostSequenceDeactivated(Sequence, SequenceId);
-}
-
-FGameQuestSequenceBase* UGameQuestGraphBase::GetSequencePtr(uint16 Id) const
-{
-	UGameQuestGraphGeneratedClass* Class = CastChecked<UGameQuestGraphGeneratedClass>(GetClass());
-	const FStructProperty* SequenceProperty = Class->NodeIdPropertyMap[Id];
-	check(SequenceProperty->Struct->IsChildOf(FGameQuestSequenceBase::StaticStruct()));
-	const FGameQuestSequenceBase* Sequence = SequenceProperty->ContainerPtrToValuePtr<FGameQuestSequenceBase>(this);
-	return const_cast<FGameQuestSequenceBase*>(Sequence);
-}
-
-FGameQuestElementBase* UGameQuestGraphBase::GetElementPtr(uint16 Id) const
-{
-	UGameQuestGraphGeneratedClass* Class = CastChecked<UGameQuestGraphGeneratedClass>(GetClass());
-	const FStructProperty* ElementProperty = Class->NodeIdPropertyMap[Id];
-	check(ElementProperty->Struct->IsChildOf(FGameQuestElementBase::StaticStruct()));
-	const FGameQuestElementBase* Element = ElementProperty->ContainerPtrToValuePtr<FGameQuestElementBase>(this);
-	return const_cast<FGameQuestElementBase*>(Element);
-}
-
-const GameQuest::FLogicList* UGameQuestGraphBase::GetLogicList(const FGameQuestNodeBase* Node) const
-{
-	UGameQuestGraphGeneratedClass* Class = CastChecked<UGameQuestGraphGeneratedClass>(GetClass());
-	return &Class->NodeIdLogicsMap[Class->NodeNameIdMap[Node->GetNodeName()]];
-}
-
-uint16 UGameQuestGraphBase::GetSequenceId(const FGameQuestSequenceBase* Sequence) const
-{
-	UGameQuestGraphGeneratedClass* Class = CastChecked<UGameQuestGraphGeneratedClass>(GetClass());
-	return Class->NodeNameIdMap[Sequence->GetNodeName()];
-}
-
-uint16 UGameQuestGraphBase::GetElementId(const FGameQuestElementBase* Element) const
-{
-	UGameQuestGraphGeneratedClass* Class = CastChecked<UGameQuestGraphGeneratedClass>(GetClass());
-	return Class->NodeNameIdMap[Element->GetNodeName()];
-}
-
-TArray<FName> UGameQuestGraphBase::GetFinishedTagNames() const
-{
-	const UGameQuestGraphGeneratedClass* Class = CastChecked<UGameQuestGraphGeneratedClass>(GetClass());
-	TArray<FName> FinishedTags;
-	for (const auto& [Name, _] : Class->FinishedTags)
-	{
-		FinishedTags.Add(Name);
-	}
-	return FinishedTags;
-}
-
-const FGameQuestFinishedTag* UGameQuestGraphBase::GetFinishedTag(const FName& Name) const
-{
-	const UGameQuestGraphGeneratedClass* Class = CastChecked<UGameQuestGraphGeneratedClass>(GetClass());
-	const FStructProperty* FinishedTagProperty = Class->FinishedTags.FindRef(Name);
-	if (FinishedTagProperty == nullptr)
-	{
-		return nullptr;
-	}
-	return FinishedTagProperty->ContainerPtrToValuePtr<FGameQuestFinishedTag>(this);
-}
-
-void UGameQuestGraphBase::BindingFinishedTags()
-{
-	const UGameQuestGraphGeneratedClass* Class = CastChecked<UGameQuestGraphGeneratedClass>(GetClass());
-	for (const auto& [Name, StructProperty] : Class->FinishedTags)
-	{
-		UFunction* Event = Owner->GetClass()->FindFunctionByName(FGameQuestFinishedTag::MakeEventName(OwnerNode->GetNodeName(), Name));
-		FGameQuestFinishedTag* FinishedTag = StructProperty->ContainerPtrToValuePtr<FGameQuestFinishedTag>(this);
-		FinishedTag->Event = Event;
-	}
-}
-
-DEFINE_FUNCTION(UGameQuestGraphBase::execInterruptSequenceByRef)
+DEFINE_FUNCTION(UGameQuestGraphBase::execInterruptNodeByRef)
 {
 	Stack.StepCompiledIn<FProperty>(nullptr);
 	void* SrcPropertyAddr = Stack.MostRecentPropertyAddress;
@@ -461,32 +486,18 @@ DEFINE_FUNCTION(UGameQuestGraphBase::execInterruptSequenceByRef)
 	{
 		return;
 	}
-	if (!ensure(StructProperty->Struct->IsChildOf(FGameQuestSequenceBase::StaticStruct())))
+	if (StructProperty->Struct->IsChildOf(FGameQuestSequenceBase::StaticStruct()))
 	{
-		return;
+		P_THIS->InterruptSequence(*static_cast<FGameQuestSequenceBase*>(SrcPropertyAddr));
 	}
-	P_THIS->InterruptSequence(*static_cast<FGameQuestSequenceBase*>(SrcPropertyAddr));
-	P_NATIVE_END;
-}
-
-DEFINE_FUNCTION(UGameQuestGraphBase::execInterruptBranchByRef)
-{
-	Stack.StepCompiledIn<FProperty>(nullptr);
-	void* SrcPropertyAddr = Stack.MostRecentPropertyAddress;
-	FProperty* MostRecentProperty = Stack.MostRecentProperty;
-	P_FINISH;
-
-	P_NATIVE_BEGIN;
-	const FStructProperty* StructProperty = CastField<FStructProperty>(MostRecentProperty);
-	if (!ensure(StructProperty))
+	else if (StructProperty->Struct->IsChildOf(FGameQuestElementBase::StaticStruct()))
 	{
-		return;
+		P_THIS->InterruptBranch(*static_cast<FGameQuestElementBase*>(SrcPropertyAddr));
 	}
-	if (!ensure(StructProperty->Struct->IsChildOf(FGameQuestElementBase::StaticStruct())))
+	else
 	{
-		return;
+		ensure(false);
 	}
-	P_THIS->InterruptBranch(*static_cast<FGameQuestElementBase*>(SrcPropertyAddr));
 	P_NATIVE_END;
 }
 
@@ -531,6 +542,10 @@ UGameQuestGraphBase::EState UGameQuestGraphBase::GetQuestState() const
 
 void UGameQuestGraphBase::ForceActivateBranchToServer_Implementation(const uint16 ElementBranchId)
 {
+	if (CVarGameQuestEnableCheat.GetValueOnGameThread() == false)
+	{
+		return;
+	}
 #if !UE_BUILD_SHIPPING || ALLOW_CONSOLE_IN_SHIPPING
 	if (!ensure(bIsActivated))
 	{
@@ -589,6 +604,10 @@ void UGameQuestGraphBase::ForceActivateBranchToServer_Implementation(const uint1
 
 void UGameQuestGraphBase::ForceActivateSequenceToServer_Implementation(const uint16 SequenceId)
 {
+	if (CVarGameQuestEnableCheat.GetValueOnGameThread() == false)
+	{
+		return;
+	}
 #if !UE_BUILD_SHIPPING || ALLOW_CONSOLE_IN_SHIPPING
 	if (!ensure(bIsActivated))
 	{
@@ -712,6 +731,10 @@ void UGameQuestGraphBase::ForceActivateSequenceToServer_Implementation(const uin
 
 void UGameQuestGraphBase::ForceFinishElementToServer_Implementation(const uint16 ElementId, const FName& EventName)
 {
+	if (CVarGameQuestEnableCheat.GetValueOnGameThread() == false)
+	{
+		return;
+	}
 #if !UE_BUILD_SHIPPING || ALLOW_CONSOLE_IN_SHIPPING
 	FGameQuestElementBase* Element = GetElementPtr(ElementId);
 	if (!ensure(Element && GetSequencePtr(Element->Sequence)->bIsActivated))
@@ -780,7 +803,7 @@ bool UGameQuestGraphBase::TryStartGameQuest()
 
 	if (UGameQuestComponent* OwnerComp = Cast<UGameQuestComponent>(Owner))
 	{
-		OwnerComp->StartQuest(this);
+		OwnerComp->PostStartQuest(this);
 	}
 	return true;
 }
