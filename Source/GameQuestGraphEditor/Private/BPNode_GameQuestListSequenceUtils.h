@@ -435,7 +435,7 @@ protected:
 					ParentGraph->Modify();
 					ListNode->Modify();
 
-					UBPNode_GameQuestElementStruct* ElementNode = NewObject<UBPNode_GameQuestElementStruct>(ParentGraph, ElementNodeClass, NAME_None, RF_Transactional);
+					UBPNode_GameQuestElementBase* ElementNode = NewObject<UBPNode_GameQuestElementBase>(ParentGraph, ElementNodeClass, NAME_None, RF_Transactional);
 					ElementNode->CreateNewGuid();
 					ElementNode->StructNodeInstance.InitializeAs(ElementStruct);
 					ElementNode->bListMode = true;

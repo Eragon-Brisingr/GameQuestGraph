@@ -499,7 +499,6 @@ void UGameQuestElementScriptable::WhenForceFinishElement_Implementation(const FN
 
 void FGameQuestElementScript::WhenQuestInitProperties(const FStructProperty* Property)
 {
-	Super::WhenQuestInitProperties(Property);
 	if (Instance)
 	{
 		Instance->Owner = this;

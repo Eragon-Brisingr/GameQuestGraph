@@ -185,7 +185,7 @@ void UBPNode_GameQuestSequenceSingle::GetMenuActions(FBlueprintActionDatabaseReg
 			else if (const TSubclassOf<UBPNode_GameQuestNodeBase> NodeClass = FGameQuestStructCollector::Get().GetBPNodeClass(ElementStruct))
 			{
 				UEdGraph* ParentGraph = SingleNode->GetGraph();
-				UBPNode_GameQuestElementStruct* ElementNode = NewObject<UBPNode_GameQuestElementStruct>(ParentGraph, NodeClass, NAME_None, RF_Transactional);
+				UBPNode_GameQuestElementBase* ElementNode = NewObject<UBPNode_GameQuestElementBase>(ParentGraph, NodeClass, NAME_None, RF_Transactional);
 				ElementNode->CreateNewGuid();
 				ElementNode->StructNodeInstance.InitializeAs(ElementStruct);
 				ElementNode->AllocateDefaultPins();
