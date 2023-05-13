@@ -101,6 +101,12 @@ FGameQuestStructCollector::FGameQuestStructCollector()
 			CustomNodeMap.Add(SupportNodeStruct, NodeNodeClass);
 		}
 	}
+
+	FCoreDelegates::OnPreExit.AddLambda([this]
+	{
+		ValidNodeStructMap.Empty();
+		CustomNodeMap.Empty();
+	});
 }
 
 FGameQuestClassCollector& FGameQuestClassCollector::Get()

@@ -133,6 +133,12 @@ void UBPNode_GameQuestFinishedTag::ExpandNode(FKismetCompilerContext& CompilerCo
 {
 	Super::ExpandNode(CompilerContext, SourceGraph);
 
+	if (FinishedTag == NAME_None)
+	{
+		CompilerContext.MessageLog.Error(TEXT("@@FinishedTag must have value"), this);
+		return;
+	}
+
 	UK2Node_CallFunction* CallTryActivateNode = CompilerContext.SpawnIntermediateNode<UK2Node_CallFunction>(this);
 	CallTryActivateNode->SetFromFunction(UGameQuestGraphBase::StaticClass()->FindFunctionByName(GET_FUNCTION_NAME_CHECKED(UGameQuestGraphBase, ProcessFinishedTag)));
 	CallTryActivateNode->AllocateDefaultPins();

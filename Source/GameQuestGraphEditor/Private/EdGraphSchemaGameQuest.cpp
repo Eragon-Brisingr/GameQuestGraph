@@ -118,7 +118,11 @@ public:
 					const FEventNameToNextNode* EventName = EventNames ? EventNames->FindByPredicate([NextNodeId](const FEventNameToNextNode& E){ return E.NodeId == NextNodeId; }) : nullptr;
 					if (EventName != nullptr)
 					{
-						const UEdGraphPin* Pin = QuestNode->FindPinChecked(EventName->EventName);
+						const UEdGraphPin* Pin = QuestNode->FindPin(EventName->EventName);
+						if (Pin == nullptr)
+						{
+							continue;
+						}
 						if (const FPinWidget* PinWidget = EventPinMap.Find(Pin))
 						{
 							const FVector2D PinSize = PinWidget->Widget.Geometry.GetAbsoluteSize();

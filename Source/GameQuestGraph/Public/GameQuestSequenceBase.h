@@ -189,6 +189,8 @@ public:
 	TArray<uint16> NextSequences;
 };
 
+struct FStreamableHandle;
+
 USTRUCT(meta = (DisplayName = "Sub Quest"))
 struct GAMEQUESTGRAPH_API FGameQuestSequenceSubQuest : public FGameQuestSequenceBase
 {
@@ -220,6 +222,7 @@ public:
 	void WhenSubQuestFinished();
 	void WhenSubQuestInterrupted();
 private:
+	TSharedPtr<FStreamableHandle> AsyncLoadHandle;
 	void WhenElementFinished(FGameQuestElementBase* FinishedElement, const FGameQuestFinishEvent& OnElementFinishedEvent) override { checkNoEntry(); }
 	void WhenElementUnfinished(FGameQuestElementBase* FinishedElement) override { checkNoEntry(); }
 };

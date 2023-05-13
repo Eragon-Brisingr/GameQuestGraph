@@ -84,6 +84,15 @@ void UBPNode_GameQuestEntryEvent::PostPlacedNewNode()
 	CustomFunctionName = TEXT("CustomEntry");
 }
 
+void UBPNode_GameQuestEntryEvent::AllocateDefaultPins()
+{
+	Super::AllocateDefaultPins();
+
+	UEdGraphPin* DelegateOutput = FindPinChecked(DelegateOutputName);
+	DelegateOutput->PinType.PinSubCategory = TEXT("NoConnect");
+	DelegateOutput->bHidden = true;
+}
+
 void UBPNode_GameQuestEntryEvent::GetMenuActions(FBlueprintActionDatabaseRegistrar& ActionRegistrar) const
 {
 	const UClass* ActionKey = GetClass();

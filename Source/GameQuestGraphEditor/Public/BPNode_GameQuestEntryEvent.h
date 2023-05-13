@@ -23,6 +23,7 @@ public:
 	TSharedPtr<INameValidatorInterface> MakeNameValidator() const override;
 	void OnRenameNode(const FString& NewName) override;
 	void PostPlacedNewNode() override;
+	void AllocateDefaultPins() override;
 	void GetMenuActions(FBlueprintActionDatabaseRegistrar& ActionRegistrar) const override;
 
 	bool IsCompatibleWithGraph(const UEdGraph* TargetGraph) const override;

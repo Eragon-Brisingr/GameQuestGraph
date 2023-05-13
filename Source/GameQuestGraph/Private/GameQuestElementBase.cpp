@@ -527,7 +527,7 @@ bool FGameQuestElementScript::ReplicateSubobject(UActorChannel* Channel, FOutBun
 
 AActor* UGameQuestElementScriptable::GetOwnerActor() const
 {
-	return GetTypedOuter<AActor>();
+	return Owner->OwnerQuest->GetOwnerActor();
 }
 
 DEFINE_FUNCTION(UGameQuestElementScriptable::execFinishElement)

@@ -576,8 +576,9 @@ void FGameQuestSequenceSubQuest::WhenSequenceActivated(bool bHasAuthority)
 		};
 		if (SubQuestClass.IsPending())
 		{
-			UAssetManager::Get().GetStreamableManager().RequestAsyncLoad(SubQuestClass.ToSoftObjectPath(), FStreamableDelegate::CreateWeakLambda(OwnerQuest.Get(), [WhenLoadClass]
+			AsyncLoadHandle = UAssetManager::Get().GetStreamableManager().RequestAsyncLoad(SubQuestClass.ToSoftObjectPath(), FStreamableDelegate::CreateWeakLambda(OwnerQuest.Get(), [this, WhenLoadClass]
 			{
+				AsyncLoadHandle.Reset();
 				WhenLoadClass();
 			}));
 		}
@@ -602,6 +603,11 @@ void FGameQuestSequenceSubQuest::WhenSequenceDeactivated(bool bHasAuthority)
 	if (SubQuestInstance && SubQuestInstance->bIsActivated)
 	{
 		SubQuestInstance->DeactivateQuest();
+	}
+	else if (AsyncLoadHandle)
+	{
+		AsyncLoadHandle->CancelHandle();
+		AsyncLoadHandle.Reset();
 	}
 }
 

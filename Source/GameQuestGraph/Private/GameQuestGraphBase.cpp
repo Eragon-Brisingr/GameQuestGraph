@@ -355,6 +355,11 @@ void UGameQuestGraphBase::BindingFinishedTags()
 	}
 }
 
+AActor* UGameQuestGraphBase::GetOwnerActor() const
+{
+	return GetTypedOuter<AActor>();
+}
+
 void UGameQuestGraphBase::InterruptQuest()
 {
 	if (!ensure(bIsActivated))

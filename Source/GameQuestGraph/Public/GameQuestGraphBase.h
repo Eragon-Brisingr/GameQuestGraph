@@ -83,7 +83,10 @@ public:
 	virtual const FGameQuestFinishedTag* GetFinishedTag(const FName& Name) const;
 	virtual void BindingFinishedTags();
 
+	UFUNCTION(BlueprintCallable, Category = "GameQuest")
 	UObject* GetOwner() const { return Owner; }
+	UFUNCTION(BlueprintCallable, Category = "GameQuest")
+	AActor* GetOwnerActor() const;
 	FGameQuestSequenceSubQuest* GetOwnerNode() const { return OwnerNode; }
 	const TArray<uint16>& GetStartSequencesIds() const { return StartSequences; }
 	const TArray<uint16>& GetActivatedSequenceIds() const { return ActivatedSequences; }
