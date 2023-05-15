@@ -36,7 +36,7 @@
 列表中的元素满足完成条件后会激活分支，若分支完成进行分支后的序列（分支序列中有选择是否中断其它分支，若不中断其它分支则当其他分支结束后会执行对应分支的后继序列）
 4. 子任务序列  
 ![SubQuestSequence](Docs/SubQuestSequence.png)  
-子任务中配置的QuestFinishedTag会创建当序列完成的引脚
+子任务中配置的QuestRerouteTag会创建当序列后继执行的引脚
     > 若想实现循环的流程也可用子任务节点激活自身，用递归的任务形式达成流程循环  
 
 C++可配置GameQuestGraphEditorSettings中的序列类型定制序列属性与行为
@@ -120,11 +120,11 @@ C++可配置GameQuestGraphEditorSettings中的序列类型定制序列属性与�
 
 CustomQuestEntry可创建额外的任务启动入口，可用作同一个任务图的不同的开始流程
 
-### 结束标签
+### 重路由标签
 
-![QuestFinishedTag](Docs/QuestFinishedTag.png)  
+![QuestRerouteTag](Docs/QuestRerouteTag.png)  
 
-QuestFinishedTag一般用作声明子任务完成时的后续事件，相同Tag名的引脚只会执行一次
+QuestRerouteTag一般用作声明子任务完成时的后续逻辑引脚，相同Tag名的引脚只会执行一次
 
 ## 游戏任务编辑器  
 

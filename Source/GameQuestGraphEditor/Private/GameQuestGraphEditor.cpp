@@ -6,7 +6,7 @@
 #include "BlueprintEditorModes.h"
 #include "BPNode_GameQuestElementBase.h"
 #include "BPNode_GameQuestEntryEvent.h"
-#include "BPNode_GameQuestFinishedTag.h"
+#include "BPNode_GameQuestRerouteTag.h"
 #include "BPNode_GameQuestNodeBase.h"
 #include "BPNode_GameQuestSequenceBase.h"
 #include "EdGraphSchemaGameQuest.h"
@@ -326,9 +326,9 @@ public:
 				]
 			];
 	}
-	TSharedRef<SWidget> CreateFinishedTagWidget(const UGameQuestGraphBase* Quest, FGameQuestSequenceSubQuest* SequenceSubQuest, const FGameQuestSequenceSubQuestFinishedTag& FinishedTag) const override
+	TSharedRef<SWidget> CreateRerouteTagWidget(const UGameQuestGraphBase* Quest, FGameQuestSequenceSubQuest* SequenceSubQuest, const FGameQuestSequenceSubQuestRerouteTag& RerouteTag) const override
 	{
-		static const FSlateBrush* EndBrush = FGameQuestGraphSlateStyle::Get().GetBrush(TEXT("Graph.Event.End"));
+		static const FSlateBrush* RouteBrush = FGameQuestGraphSlateStyle::Get().GetBrush(TEXT("Graph.Reroute"));
 		return SNew(SHorizontalBox)
 			+ SHorizontalBox::Slot()
 			.VAlign(VAlign_Center)
@@ -336,7 +336,7 @@ public:
 			.Padding(4.f)
 			[
 				SNew(SImage)
-				.Image(EndBrush)
+				.Image(RouteBrush)
 			]
 			+ SHorizontalBox::Slot()
 			.VAlign(VAlign_Center)
@@ -344,7 +344,7 @@ public:
 			.Padding(2.f)
 			[
 				SNew(STextBlock)
-				.Text(FText::FromName(FinishedTag.TagName))
+				.Text(FText::FromName(RerouteTag.TagName))
 			]
 			+ SHorizontalBox::Slot()
 			.AutoWidth()
@@ -353,21 +353,21 @@ public:
 			[
 				SNew(SButton)
 				.ButtonStyle(FAppStyle::Get(), "HoverHintOnly")
-				.ToolTipText(FinishedTag.TagName != FGameQuestFinishedTag::FinishCompletedTagName ? LOCTEXT("BrowseToFinishedTagNode", "Browse To Finished Tag Node") : LOCTEXT("BrowseToFinishedTagPreNode", "Browse To Finished Node") )
-				.OnClicked_Lambda([this, SequenceSubQuest, FinishedTag]
+				.ToolTipText(RerouteTag.TagName != FGameQuestRerouteTag::FinishCompletedTagName ? LOCTEXT("BrowseToRerouteTagNode", "Browse To Reroute Tag Node") : LOCTEXT("BrowseToRerouteTagPreNode", "Browse To Finished Node") )
+				.OnClicked_Lambda([this, SequenceSubQuest, RerouteTag]
 				{
-					if (FinishedTag.TagName != FGameQuestFinishedTag::FinishCompletedTagName)
+					if (RerouteTag.TagName != FGameQuestRerouteTag::FinishCompletedTagName)
 					{
-						JumpToFinishedTagNode(SequenceSubQuest->SubQuestInstance, FinishedTag);
+						JumpToRerouteTagNode(SequenceSubQuest->SubQuestInstance, RerouteTag);
 					}
-					else if (FinishedTag.PreSubQuestBranch != GameQuest::IdNone)
+					else if (RerouteTag.PreSubQuestBranch != GameQuest::IdNone)
 					{
-						const FGameQuestElementBase* BranchElement = SequenceSubQuest->SubQuestInstance->GetElementPtr(FinishedTag.PreSubQuestBranch);
+						const FGameQuestElementBase* BranchElement = SequenceSubQuest->SubQuestInstance->GetElementPtr(RerouteTag.PreSubQuestBranch);
 						JumpToQuestNode(SequenceSubQuest->SubQuestInstance, BranchElement->GetNodeName());
 					}
-					else if (FinishedTag.PreSubQuestSequence != GameQuest::IdNone)
+					else if (RerouteTag.PreSubQuestSequence != GameQuest::IdNone)
 					{
-						const FGameQuestSequenceBase* Sequence = SequenceSubQuest->SubQuestInstance->GetSequencePtr(FinishedTag.PreSubQuestSequence);
+						const FGameQuestSequenceBase* Sequence = SequenceSubQuest->SubQuestInstance->GetSequencePtr(RerouteTag.PreSubQuestSequence);
 						JumpToQuestNode(SequenceSubQuest->SubQuestInstance, Sequence->GetNodeName());
 					}
 					return FReply::Handled();
@@ -472,7 +472,7 @@ public:
 			}
 		}
 	}
-	static void JumpToFinishedTagNode(const UGameQuestGraphBase* Quest, const FGameQuestSequenceSubQuestFinishedTag& FinishedTag)
+	static void JumpToRerouteTagNode(const UGameQuestGraphBase* Quest, const FGameQuestSequenceSubQuestRerouteTag& RerouteTag)
 	{
 		const UGameQuestGraphBlueprint* Blueprint = Cast<UGameQuestGraphBlueprint>(Quest->GetClass()->ClassGeneratedBy);
 		if (Blueprint == nullptr || Blueprint->GameQuestGraph == nullptr)
@@ -481,8 +481,8 @@ public:
 		}
 		for (const UEdGraphNode* Node : Blueprint->GameQuestGraph->Nodes)
 		{
-			const UBPNode_GameQuestFinishedTag* FinishedTagNode = Cast<UBPNode_GameQuestFinishedTag>(Node);
-			if (FinishedTagNode == nullptr)
+			const UBPNode_GameQuestRerouteTag* RerouteTagNode = Cast<UBPNode_GameQuestRerouteTag>(Node);
+			if (RerouteTagNode == nullptr)
 			{
 				continue;
 			}
@@ -520,10 +520,10 @@ public:
 					return nullptr;
 				};
 			};
-			if (FinishedTagNode->FinishedTag == FinishedTag.TagName
-				&& FPreNodeFinder{ FinishedTag.PreSubQuestBranch != GameQuest::IdNone ? FinishedTag.PreSubQuestBranch : FinishedTag.PreSubQuestSequence }.Do(FinishedTagNode) != nullptr)
+			if (RerouteTagNode->RerouteTag == RerouteTag.TagName
+				&& FPreNodeFinder{ RerouteTag.PreSubQuestBranch != GameQuest::IdNone ? RerouteTag.PreSubQuestBranch : RerouteTag.PreSubQuestSequence }.Do(RerouteTagNode) != nullptr)
 			{
-				FKismetEditorUtilities::BringKismetToFocusAttentionOnObject(FinishedTagNode);
+				FKismetEditorUtilities::BringKismetToFocusAttentionOnObject(RerouteTagNode);
 				return;
 			}
 		}
@@ -654,7 +654,7 @@ bool FGameQuestGraphEditor::CanCollapseGameQuestEditorNodes() const
 			{
 				return false;
 			}
-			if (SelectedNode->IsA<UBPNode_GameQuestFinishedTag>())
+			if (SelectedNode->IsA<UBPNode_GameQuestRerouteTag>())
 			{
 				return false;
 			}

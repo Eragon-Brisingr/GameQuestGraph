@@ -37,7 +37,7 @@ public:
 };
 
 USTRUCT(BlueprintType, BlueprintInternalUseOnly)
-struct GAMEQUESTGRAPH_API FGameQuestFinishedTag
+struct GAMEQUESTGRAPH_API FGameQuestRerouteTag
 {
 	GENERATED_BODY()
 public:
@@ -48,13 +48,13 @@ public:
 	uint16 PreBranchId = GameQuest::IdNone;
 
 	static const FName FinishCompletedTagName;
-	static FName MakeVariableName(const FName& FinishedTag)
+	static FName MakeVariableName(const FName& RerouteTag)
 	{
-		return *FString::Printf(TEXT("__GQFT_%s"), *FinishedTag.ToString());
+		return *FString::Printf(TEXT("__GQRT_%s"), *RerouteTag.ToString());
 	}
-	static FName MakeEventName(const FName& NodeName, const FName& FinishedTag)
+	static FName MakeEventName(const FName& NodeName, const FName& RerouteTag)
 	{
-		return *FString::Printf(TEXT("__GQFT_%s_%s"), *NodeName.ToString(), *FinishedTag.ToString());
+		return *FString::Printf(TEXT("__GQRT_%s_%s"), *NodeName.ToString(), *RerouteTag.ToString());
 	}
 };
 

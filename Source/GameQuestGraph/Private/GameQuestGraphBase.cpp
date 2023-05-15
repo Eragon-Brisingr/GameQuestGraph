@@ -322,36 +322,36 @@ uint16 UGameQuestGraphBase::GetElementId(const FGameQuestElementBase* Element) c
 	return Class->NodeNameIdMap[Element->GetNodeName()];
 }
 
-TArray<FName> UGameQuestGraphBase::GetFinishedTagNames() const
+TArray<FName> UGameQuestGraphBase::GetRerouteTagNames() const
 {
 	const UGameQuestGraphGeneratedClass* Class = CastChecked<UGameQuestGraphGeneratedClass>(GetClass());
-	TArray<FName> FinishedTags;
-	for (const auto& [Name, _] : Class->FinishedTags)
+	TArray<FName> RerouteTags;
+	for (const auto& [Name, _] : Class->RerouteTags)
 	{
-		FinishedTags.Add(Name);
+		RerouteTags.Add(Name);
 	}
-	return FinishedTags;
+	return RerouteTags;
 }
 
-const FGameQuestFinishedTag* UGameQuestGraphBase::GetFinishedTag(const FName& Name) const
+const FGameQuestRerouteTag* UGameQuestGraphBase::GetRerouteTag(const FName& Name) const
 {
 	const UGameQuestGraphGeneratedClass* Class = CastChecked<UGameQuestGraphGeneratedClass>(GetClass());
-	const FStructProperty* FinishedTagProperty = Class->FinishedTags.FindRef(Name);
-	if (FinishedTagProperty == nullptr)
+	const FStructProperty* RerouteTagProperty = Class->RerouteTags.FindRef(Name);
+	if (RerouteTagProperty == nullptr)
 	{
 		return nullptr;
 	}
-	return FinishedTagProperty->ContainerPtrToValuePtr<FGameQuestFinishedTag>(this);
+	return RerouteTagProperty->ContainerPtrToValuePtr<FGameQuestRerouteTag>(this);
 }
 
-void UGameQuestGraphBase::BindingFinishedTags()
+void UGameQuestGraphBase::BindingRerouteTags()
 {
 	const UGameQuestGraphGeneratedClass* Class = CastChecked<UGameQuestGraphGeneratedClass>(GetClass());
-	for (const auto& [Name, StructProperty] : Class->FinishedTags)
+	for (const auto& [Name, StructProperty] : Class->RerouteTags)
 	{
-		UFunction* Event = Owner->GetClass()->FindFunctionByName(FGameQuestFinishedTag::MakeEventName(OwnerNode->GetNodeName(), Name));
-		FGameQuestFinishedTag* FinishedTag = StructProperty->ContainerPtrToValuePtr<FGameQuestFinishedTag>(this);
-		FinishedTag->Event = Event;
+		UFunction* Event = Owner->GetClass()->FindFunctionByName(FGameQuestRerouteTag::MakeEventName(OwnerNode->GetNodeName(), Name));
+		FGameQuestRerouteTag* RerouteTag = StructProperty->ContainerPtrToValuePtr<FGameQuestRerouteTag>(this);
+		RerouteTag->Event = Event;
 	}
 }
 
@@ -696,7 +696,7 @@ void UGameQuestGraphBase::ForceActivateSequenceToServer_Implementation(const uin
 				}
 			}
 		}
-		void FinishSequence(const FGameQuestSequenceSubQuest* SequenceSubQuest, const FName& FinishedTag) const
+		void FinishSequence(const FGameQuestSequenceSubQuest* SequenceSubQuest, const FName& RerouteTag) const
 		{
 			UGameQuestGraphBase* SubQuestInstance = SequenceSubQuest->SubQuestInstance;
 			if (SubQuestInstance == nullptr)
@@ -708,7 +708,7 @@ void UGameQuestGraphBase::ForceActivateSequenceToServer_Implementation(const uin
 				return;
 			}
 			const UGameQuestGraphGeneratedClass* SubClass = CastChecked<UGameQuestGraphGeneratedClass>(SubQuestInstance->GetClass());
-			const auto [EventName, ToActivateId] = SubClass->FinishedTagPreNodesMap[FinishedTag][0];
+			const auto [EventName, ToActivateId] = SubClass->RerouteTagPreNodesMap[RerouteTag][0];
 			if (SubClass->NodeIdPropertyMap[ToActivateId]->Struct->IsChildOf(FGameQuestSequenceBase::StaticStruct()))
 			{
 				SubQuestInstance->ForceActivateSequenceToServer(ToActivateId);
@@ -789,8 +789,8 @@ void UGameQuestGraphBase::ForceActivateSequenceToServer_Implementation(const uin
 		else if (const FGameQuestSequenceSubQuest* SequenceSubQuest = GameQuestCast<FGameQuestSequenceSubQuest>(Sequence))
 		{
 			using FEventNameToNextNode = UGameQuestGraphGeneratedClass::FEventNameNodeId;
-			const FEventNameToNextNode* FinishedTagName = Class->NodeIdEventNameMap[PendingActivatedIds[Idx]].FindByPredicate([&](const FEventNameToNextNode& E){ return E.NodeId == PendingActivatedIds[Idx + 1]; });
-			FLocal{ *this }.FinishSequence(SequenceSubQuest, FinishedTagName->EventName);
+			const FEventNameToNextNode* RerouteTagName = Class->NodeIdEventNameMap[PendingActivatedIds[Idx]].FindByPredicate([&](const FEventNameToNextNode& E){ return E.NodeId == PendingActivatedIds[Idx + 1]; });
+			FLocal{ *this }.FinishSequence(SequenceSubQuest, RerouteTagName->EventName);
 		}
 		else
 		{
@@ -897,24 +897,24 @@ void UGameQuestGraphBase::PostExecuteEntryEvent()
 	Context::AddNextSequenceIdFunc = StartCachedAddNextSequenceIdFuncList.Pop();
 }
 
-void UGameQuestGraphBase::ProcessFinishedTag(FName FinishedTagName, FGameQuestFinishedTag& FinishedTag)
+void UGameQuestGraphBase::ProcessRerouteTag(FName RerouteTagName, FGameQuestRerouteTag& RerouteTag)
 {
 	const uint16 FinishedSequenceId = Context::CurrentFinishedSequenceId;
 	if (!ensure(FinishedSequenceId != GameQuest::IdNone))
 	{
 		return;
 	}
-	if (FinishedTag.PreSequenceId != GameQuest::IdNone)
+	if (RerouteTag.PreSequenceId != GameQuest::IdNone)
 	{
 		return;
 	}
-	FinishedTag.PreSequenceId = FinishedSequenceId;
-	FinishedTag.PreBranchId = Context::CurrentFinishedBranchId;
+	RerouteTag.PreSequenceId = FinishedSequenceId;
+	RerouteTag.PreBranchId = Context::CurrentFinishedBranchId;
 	if (OwnerNode == nullptr)
 	{
 		return;
 	}
-	OwnerNode->ProcessFinishedTag(FinishedTagName, FinishedTag);
+	OwnerNode->ProcessRerouteTag(RerouteTagName, RerouteTag);
 }
 
 void UGameQuestGraphBase::InvokeFinishQuest()

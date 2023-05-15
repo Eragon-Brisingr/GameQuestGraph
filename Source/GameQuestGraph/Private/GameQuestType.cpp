@@ -9,7 +9,7 @@
 
 DEFINE_LOG_CATEGORY(LogGameQuest);
 
-const FName FGameQuestFinishedTag::FinishCompletedTagName = TEXT("FinishCompleted");
+const FName FGameQuestRerouteTag::FinishCompletedTagName = TEXT("FinishCompleted");
 
 FGameQuestSequencePtr::FGameQuestSequencePtr(FGameQuestSequenceBase& Sequence)
 	: SequencePtr(&Sequence)

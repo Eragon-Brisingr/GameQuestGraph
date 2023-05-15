@@ -14,7 +14,7 @@ namespace Context
 	uint16 CurrentFinishedSequenceId;
 	uint16 CurrentFinishedBranchId;
 	FAddNextSequenceIdFunc AddNextSequenceIdFunc;
-	FName PreFinishedTagName;
+	FName PreRerouteTagName;
 }
 
 void FGameQuestSequenceBase::TryActivateSequence()
@@ -552,7 +552,7 @@ void FGameQuestSequenceSubQuest::WhenSequenceActivated(bool bHasAuthority)
 			SubQuestInstance = NewObject<UGameQuestGraphBase>(OwnerQuest, QuestClass);
 			SubQuestInstance->Owner = OwnerQuest;
 			SubQuestInstance->OwnerNode = this;
-			SubQuestInstance->BindingFinishedTags();
+			SubQuestInstance->BindingRerouteTags();
 			using namespace Context;
 			GetEvaluateGraphExposedInputs(bHasAuthority);
 			TGuardValue FinishedSequenceGuard{ CurrentFinishedSequenceId, GameQuest::IdNone };
@@ -632,36 +632,39 @@ void FGameQuestSequenceSubQuest::WhenTick(float DeltaSeconds)
 TArray<uint16> FGameQuestSequenceSubQuest::GetNextSequences() const
 {
 	TArray<uint16> NextSequences;
-	for (const FGameQuestSequenceSubQuestFinishedTag& FinishedTag : FinishedTags)
+	for (const FGameQuestSequenceSubQuestRerouteTag& RerouteTag : RerouteTags)
 	{
-		NextSequences.Append(FinishedTag.NextSequences);
+		NextSequences.Append(RerouteTag.NextSequences);
 	}
 	return NextSequences;
 }
 
-void FGameQuestSequenceSubQuest::ProcessFinishedTag(const FName& FinishedTagName, const FGameQuestFinishedTag& FinishedTag)
+void FGameQuestSequenceSubQuest::ProcessRerouteTag(const FName& RerouteTagName, const FGameQuestRerouteTag& RerouteTag)
 {
-	check(FinishedTags.ContainsByPredicate([&](const FGameQuestSequenceSubQuestFinishedTag& E){ return E.TagName == FinishedTagName; }) == false);
-	UE_LOG(LogGameQuest, Verbose, TEXT("SubQuestProcessFinishedTag %s.%s.%s"), *GetNodeName().ToString(), *SubQuestInstance->GetName(), *FinishedTagName.ToString());
-	FGameQuestSequenceSubQuestFinishedTag& SubQuestFinishedTag = FinishedTags.Add_GetRef({ FinishedTagName, FinishedTag.PreSequenceId, FinishedTag.PreBranchId, Context::PreFinishedTagName });
-	TGuardValue PreFinishedTagNameGuard{ Context::PreFinishedTagName, FinishedTagName };
-	TGuardValue<Context::FAddNextSequenceIdFunc> AddNextSequenceIdFuncGuard{ Context::AddNextSequenceIdFunc, [this, &SubQuestFinishedTag](const uint16 SequenceId)
+	check(RerouteTags.ContainsByPredicate([&](const FGameQuestSequenceSubQuestRerouteTag& E){ return E.TagName == RerouteTagName; }) == false);
+	UE_LOG(LogGameQuest, Verbose, TEXT("SubQuestProcessRerouteTag %s.%s.%s"), *GetNodeName().ToString(), *SubQuestInstance->GetName(), *RerouteTagName.ToString());
+	FGameQuestSequenceSubQuestRerouteTag& SubQuestRerouteTag = RerouteTags.Add_GetRef({ RerouteTagName, RerouteTag.PreSequenceId, RerouteTag.PreBranchId, Context::PreRerouteTagName });
+	TGuardValue PreRerouteTagNameGuard{ Context::PreRerouteTagName, RerouteTagName };
+	TGuardValue<Context::FAddNextSequenceIdFunc> AddNextSequenceIdFuncGuard{ Context::AddNextSequenceIdFunc, [this, &SubQuestRerouteTag](const uint16 SequenceId)
 	{
-		SubQuestFinishedTag.NextSequences.Add(SequenceId);
+		SubQuestRerouteTag.NextSequences.Add(SequenceId);
 		MarkNodeNetDirty();
 	}};
-	ExecuteFinishEvent(FinishedTag.Event, SubQuestFinishedTag.NextSequences, 0);
+	ExecuteFinishEvent(RerouteTag.Event, SubQuestRerouteTag.NextSequences, 0);
 	MarkNodeNetDirty();
 }
 
 void FGameQuestSequenceSubQuest::WhenSubQuestFinished()
 {
 	DeactivateSequence(OwnerQuest->GetSequenceId(this));
-	if (UFunction* FinishCompletedEvent = OwnerQuest->GetClass()->FindFunctionByName(FGameQuestFinishedTag::MakeEventName(GetNodeName(), FGameQuestFinishedTag::FinishCompletedTagName)))
+	if (UFunction* FinishCompletedEvent = OwnerQuest->GetClass()->FindFunctionByName(FGameQuestRerouteTag::MakeEventName(GetNodeName(), FGameQuestRerouteTag::FinishCompletedTagName)))
 	{
-		ProcessFinishedTag(FGameQuestFinishedTag::FinishCompletedTagName, { FinishCompletedEvent, Context::CurrentFinishedSequenceId, Context::CurrentFinishedBranchId });
+		ProcessRerouteTag(FGameQuestRerouteTag::FinishCompletedTagName, { FinishCompletedEvent, Context::CurrentFinishedSequenceId, Context::CurrentFinishedBranchId });
 	}
-	OwnerQuest->InvokeFinishQuest();
+	else
+	{
+		OwnerQuest->InvokeFinishQuest();
+	}
 }
 
 void FGameQuestSequenceSubQuest::WhenSubQuestInterrupted()

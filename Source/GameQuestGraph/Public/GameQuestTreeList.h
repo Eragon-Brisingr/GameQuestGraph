@@ -19,7 +19,7 @@ struct FGameQuestSequenceBase;
 struct FGameQuestSequenceBranch;
 struct FGameQuestElementBase;
 struct FGameQuestSequenceSubQuest;
-struct FGameQuestSequenceSubQuestFinishedTag;
+struct FGameQuestSequenceSubQuestRerouteTag;
 
 class GAMEQUESTGRAPH_API SGameQuestTreeListBase : public SCompoundWidget
 {
@@ -41,7 +41,7 @@ public:
 	virtual TSharedRef<SWidget> CreateSequenceHeader(const UGameQuestGraphBase* Quest, uint16 SequenceId, FGameQuestSequenceBase* Sequence) const = 0;
 	virtual TSharedRef<SWidget> CreateSequenceContent(const UGameQuestGraphBase* Quest, uint16 SequenceId, FGameQuestSequenceBase* Sequence);
 	virtual TSharedRef<SWidget> CreateSubQuestHeader(const UGameQuestGraphBase* Quest, FGameQuestSequenceSubQuest* SequenceSubQuest) const = 0;
-	virtual TSharedRef<SWidget> CreateFinishedTagWidget(const UGameQuestGraphBase* Quest, FGameQuestSequenceSubQuest* SequenceSubQuest, const FGameQuestSequenceSubQuestFinishedTag& FinishedTag) const = 0;
+	virtual TSharedRef<SWidget> CreateRerouteTagWidget(const UGameQuestGraphBase* Quest, FGameQuestSequenceSubQuest* SequenceSubQuest, const FGameQuestSequenceSubQuestRerouteTag& RerouteTag) const = 0;
 	virtual TSharedRef<SWidget> ApplySequenceWrapper(const UGameQuestGraphBase* Quest, uint16 SequenceId, FGameQuestSequenceBase* Sequence, const TSharedRef<SWidget>& SequenceWidget) const;
 	virtual TSharedRef<SWidget> ApplyBranchElementWrapper(const UGameQuestGraphBase* Quest, FGameQuestSequenceBranch* SequenceBranch, int32 BranchIdx, uint16 ElementId, FGameQuestElementBase* Element, const TSharedRef<SWidget>& ElementWidget) const;
 	virtual TSharedRef<SGameQuestTreeListBase> CreateSubTreeList(UGameQuestGraphBase* SubQuest) const = 0;
@@ -73,9 +73,9 @@ public:
 	// Must Implement GameQuestTreeListSubQuest Interface
 	UPROPERTY(EditAnywhere, meta = (MustImplement = "/Script/GameQuestGraph.GameQuestTreeListSubQuest"))
 	TSubclassOf<UUserWidget> SubQuestHeader;
-	// Must Implement GameQuestTreeListFinishedTag Interface
-	UPROPERTY(EditAnywhere, meta = (MustImplement = "/Script/GameQuestGraph.GameQuestTreeListFinishedTag"))
-	TSubclassOf<UUserWidget> FinishedTagWidget;
+	// Must Implement GameQuestTreeListRerouteTag Interface
+	UPROPERTY(EditAnywhere, meta = (MustImplement = "/Script/GameQuestGraph.GameQuestTreeListRerouteTag"))
+	TSubclassOf<UUserWidget> RerouteTagWidget;
 
 	class SGameQuestTreeListUMG;
 	class SGameQuestTreeListSubUMG;
@@ -129,14 +129,14 @@ public:
 };
 
 UINTERFACE(MinimalAPI)
-class UGameQuestTreeListFinishedTag : public UInterface
+class UGameQuestTreeListRerouteTag : public UInterface
 {
 	GENERATED_BODY()
 };
-class GAMEQUESTGRAPH_API IGameQuestTreeListFinishedTag
+class GAMEQUESTGRAPH_API IGameQuestTreeListRerouteTag
 {
 	GENERATED_BODY()
 public:
 	UFUNCTION(BlueprintNativeEvent, Category = GameQuest)
-	void WhenSetFinishedTag(const UGameQuestGraphBase* Quest, const FName& FinishedTagName);
+	void WhenSetRerouteTag(const UGameQuestGraphBase* Quest, const FName& RerouteTagName);
 };

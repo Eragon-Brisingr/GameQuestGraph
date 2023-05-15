@@ -56,6 +56,6 @@ public:
 		}
 	};
 	TMap<uint16, TArray<FEventNameNodeId, TInlineAllocator<1>>> NodeIdEventNameMap;
-	TMap<FName, FStructProperty*> FinishedTags;
-	TMap<FName, TArray<FEventNameNodeId, TInlineAllocator<1>>> FinishedTagPreNodesMap;
+	TMap<FName, FStructProperty*> RerouteTags;
+	TMap<FName, TArray<FEventNameNodeId, TInlineAllocator<1>>> RerouteTagPreNodesMap;
 };

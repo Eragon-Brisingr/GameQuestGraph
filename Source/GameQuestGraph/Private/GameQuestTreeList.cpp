@@ -16,9 +16,9 @@
 namespace GameQuest
 {
 	const FMargin TreeNodePadding{ 20.f, 0.f, 0.f, 0.f };
-	struct FFinishedTagNode
+	struct FRerouteTagNode
 	{
-		FGameQuestSequenceSubQuestFinishedTag Tag;
+		FGameQuestSequenceSubQuestRerouteTag Tag;
 		TSharedRef<SWidget> TagWidget;
 		struct FSequence
 		{
@@ -42,7 +42,7 @@ namespace GameQuest
 			TSharedRef<SWidget> Content;
 		};
 		TArray<FManagedSequence> ManagedSequences;
-		TArray<FFinishedTagNode> FinishedTagNodes;
+		TArray<FRerouteTagNode> RerouteTagNodes;
 
 		TSharedRef<SWidget> Construct(SGameQuestTreeListBase* TreeList,  const UGameQuestGraphBase* Quest, const TArray<uint16>& Sequences)
 		{
@@ -72,7 +72,7 @@ namespace GameQuest
 		void RefreshManagedSequences(SGameQuestTreeListBase* TreeList)
 		{
 			SequenceList->ClearChildren();
-			if (ManagedSequences.Num() == 1 && FinishedTagNodes.Num() == 0)
+			if (ManagedSequences.Num() == 1 && RerouteTagNodes.Num() == 0)
 			{
 				const FManagedSequence& Sequence = ManagedSequences[0];
 				SequenceList->AddSlot()
@@ -93,14 +93,14 @@ namespace GameQuest
 						])
 				];
 			}
-			else if (ManagedSequences.Num() == 0 && FinishedTagNodes.Num() == 1 && FinishedTagNodes[0].Sequences.Num() == 1)
+			else if (ManagedSequences.Num() == 0 && RerouteTagNodes.Num() == 1 && RerouteTagNodes[0].Sequences.Num() == 1)
 			{
-				const auto& Sequence = FinishedTagNodes[0].Sequences[0];
+				const auto& Sequence = RerouteTagNodes[0].Sequences[0];
 				SequenceList->AddSlot()
 				.AutoHeight()
 				.Padding(TreeNodePadding)
 				[
-					FinishedTagNodes[0].TagWidget
+					RerouteTagNodes[0].TagWidget
 				];
 				SequenceList->AddSlot()
 				.AutoHeight()
@@ -145,7 +145,7 @@ namespace GameQuest
 							])
 					];
 				}
-				for (const FFinishedTagNode& Node : FinishedTagNodes)
+				for (const FRerouteTagNode& Node : RerouteTagNodes)
 				{
 					SequenceList->AddSlot()
 					.AutoHeight()
@@ -178,17 +178,17 @@ namespace GameQuest
 				}
 			}
 		}
-		void AddFinishedTagSequences(SGameQuestTreeListBase* TreeList, const FFinishedTagNode& FinishedTagNode)
+		void AddRerouteTagSequences(SGameQuestTreeListBase* TreeList, const FRerouteTagNode& RerouteTagNode)
 		{
-			FinishedTagNodes.Add(FinishedTagNode);
+			RerouteTagNodes.Add(RerouteTagNode);
 			RefreshManagedSequences(TreeList);
 		}
-		void RemoveFinishedTagSequence(SGameQuestTreeListBase* TreeList, const FFinishedTagNode& FinishedTagNode)
+		void RemoveRerouteTagSequence(SGameQuestTreeListBase* TreeList, const FRerouteTagNode& RerouteTagNode)
 		{
-			const int32 Idx = FinishedTagNodes.IndexOfByPredicate([&](const FFinishedTagNode& E){ return E.Tag.TagName == FinishedTagNode.Tag.TagName; });
+			const int32 Idx = RerouteTagNodes.IndexOfByPredicate([&](const FRerouteTagNode& E){ return E.Tag.TagName == RerouteTagNode.Tag.TagName; });
 			if (ensure(Idx != INDEX_NONE))
 			{
-				FinishedTagNodes.RemoveAt(Idx);
+				RerouteTagNodes.RemoveAt(Idx);
 				RefreshManagedSequences(TreeList);
 			}
 		}
@@ -199,8 +199,8 @@ namespace GameQuest
 	public:
 		virtual ~FSequenceNodeBase() = default;
 		virtual void BuildNextSequences(SGameQuestTreeListBase* TreeList, const UGameQuestGraphBase* Quest) = 0;
-		virtual void ShowFinishedTagSequences(const FGameQuestSequenceSubQuestFinishedTag& FinishedTag, SGameQuestTreeListBase* OwnerTreeList, const FFinishedTagNode& FinishedTagNode) = 0;
-		virtual void HiddenFinishedTagSequences(const FGameQuestSequenceSubQuestFinishedTag& FinishedTag, SGameQuestTreeListBase* OwnerTreeList, const FFinishedTagNode& FinishedTagNode) = 0;
+		virtual void ShowRerouteTagSequences(const FGameQuestSequenceSubQuestRerouteTag& RerouteTag, SGameQuestTreeListBase* OwnerTreeList, const FRerouteTagNode& RerouteTagNode) = 0;
+		virtual void HiddenRerouteTagSequences(const FGameQuestSequenceSubQuestRerouteTag& RerouteTag, SGameQuestTreeListBase* OwnerTreeList, const FRerouteTagNode& RerouteTagNode) = 0;
 	};
 
 	class FSequenceSingleNode : public FSequenceNodeBase
@@ -232,13 +232,13 @@ namespace GameQuest
 		{
 			NextSequenceListNode.AddNextSequences(TreeList, Quest, SequenceSingle->NextSequences);
 		}
-		void ShowFinishedTagSequences(const FGameQuestSequenceSubQuestFinishedTag& FinishedTag, SGameQuestTreeListBase* OwnerTreeList, const FFinishedTagNode& FinishedTagNode) override
+		void ShowRerouteTagSequences(const FGameQuestSequenceSubQuestRerouteTag& RerouteTag, SGameQuestTreeListBase* OwnerTreeList, const FRerouteTagNode& RerouteTagNode) override
 		{
-			NextSequenceListNode.AddFinishedTagSequences(OwnerTreeList, FinishedTagNode);
+			NextSequenceListNode.AddRerouteTagSequences(OwnerTreeList, RerouteTagNode);
 		}
-		void HiddenFinishedTagSequences(const FGameQuestSequenceSubQuestFinishedTag& FinishedTag, SGameQuestTreeListBase* OwnerTreeList, const FFinishedTagNode& FinishedTagNode) override
+		void HiddenRerouteTagSequences(const FGameQuestSequenceSubQuestRerouteTag& RerouteTag, SGameQuestTreeListBase* OwnerTreeList, const FRerouteTagNode& RerouteTagNode) override
 		{
-			NextSequenceListNode.RemoveFinishedTagSequence(OwnerTreeList, FinishedTagNode);
+			NextSequenceListNode.RemoveRerouteTagSequence(OwnerTreeList, RerouteTagNode);
 		}
 	};
 
@@ -269,13 +269,13 @@ namespace GameQuest
 		{
 			NextSequenceListNode.AddNextSequences(TreeList, Quest, SequenceList->NextSequences);
 		}
-		void ShowFinishedTagSequences(const FGameQuestSequenceSubQuestFinishedTag& FinishedTag, SGameQuestTreeListBase* OwnerTreeList, const FFinishedTagNode& FinishedTagNode) override
+		void ShowRerouteTagSequences(const FGameQuestSequenceSubQuestRerouteTag& RerouteTag, SGameQuestTreeListBase* OwnerTreeList, const FRerouteTagNode& RerouteTagNode) override
 		{
-			NextSequenceListNode.AddFinishedTagSequences(OwnerTreeList, FinishedTagNode);
+			NextSequenceListNode.AddRerouteTagSequences(OwnerTreeList, RerouteTagNode);
 		}
-		void HiddenFinishedTagSequences(const FGameQuestSequenceSubQuestFinishedTag& FinishedTag, SGameQuestTreeListBase* OwnerTreeList, const FFinishedTagNode& FinishedTagNode) override
+		void HiddenRerouteTagSequences(const FGameQuestSequenceSubQuestRerouteTag& RerouteTag, SGameQuestTreeListBase* OwnerTreeList, const FRerouteTagNode& RerouteTagNode) override
 		{
-			NextSequenceListNode.RemoveFinishedTagSequence(OwnerTreeList, FinishedTagNode);
+			NextSequenceListNode.RemoveRerouteTagSequence(OwnerTreeList, RerouteTagNode);
 		}
 	};
 
@@ -369,31 +369,31 @@ namespace GameQuest
 				}
 			}
 		}
-		void ShowFinishedTagSequences(const FGameQuestSequenceSubQuestFinishedTag& FinishedTag, SGameQuestTreeListBase* OwnerTreeList, const FFinishedTagNode& FinishedTagNode) override
+		void ShowRerouteTagSequences(const FGameQuestSequenceSubQuestRerouteTag& RerouteTag, SGameQuestTreeListBase* OwnerTreeList, const FRerouteTagNode& RerouteTagNode) override
 		{
 			for (int32 Idx = 0; Idx < SequenceBranch->Branches.Num(); ++Idx)
 			{
 				const FGameQuestSequenceBranchElement& Branch = SequenceBranch->Branches[Idx];
 				FBranchElementNode::FBranchWidget& BranchVisualData = BranchElement.BranchWidgets[Idx];
-				if (Branch.Element != FinishedTag.PreSubQuestBranch)
+				if (Branch.Element != RerouteTag.PreSubQuestBranch)
 				{
 					continue;
 				}
-				BranchVisualData.NextSequenceListNode.AddFinishedTagSequences(OwnerTreeList, FinishedTagNode);
+				BranchVisualData.NextSequenceListNode.AddRerouteTagSequences(OwnerTreeList, RerouteTagNode);
 				BranchVisualData.NextSequenceListNode.SequenceList->SetVisibility(EVisibility::SelfHitTestInvisible);
 			}
 		}
-		void HiddenFinishedTagSequences(const FGameQuestSequenceSubQuestFinishedTag& FinishedTag, SGameQuestTreeListBase* OwnerTreeList, const FFinishedTagNode& FinishedTagNode) override
+		void HiddenRerouteTagSequences(const FGameQuestSequenceSubQuestRerouteTag& RerouteTag, SGameQuestTreeListBase* OwnerTreeList, const FRerouteTagNode& RerouteTagNode) override
 		{
 			for (int32 Idx = 0; Idx < SequenceBranch->Branches.Num(); ++Idx)
 			{
 				const FGameQuestSequenceBranchElement& Branch = SequenceBranch->Branches[Idx];
 				FBranchElementNode::FBranchWidget& BranchVisualData = BranchElement.BranchWidgets[Idx];
-				if (Branch.Element != FinishedTag.PreSubQuestBranch)
+				if (Branch.Element != RerouteTag.PreSubQuestBranch)
 				{
 					continue;
 				}
-				BranchVisualData.NextSequenceListNode.RemoveFinishedTagSequence(OwnerTreeList, FinishedTagNode);
+				BranchVisualData.NextSequenceListNode.RemoveRerouteTagSequence(OwnerTreeList, RerouteTagNode);
 			}
 		}
 	};
@@ -407,7 +407,7 @@ namespace GameQuest
 		bool bIsExpand = true;
 		TSharedPtr<SGameQuestTreeListBase> SubTreeList;
 		FTSTicker::FDelegateHandle TickerHandle;
-		TMap<FName, FFinishedTagNode> FinishedTagMap;
+		TMap<FName, FRerouteTagNode> RerouteTagMap;
 
 		TSharedRef<SWidget> Construct(SGameQuestTreeListBase* TreeList, const UGameQuestGraphBase* Quest, FGameQuestSequenceSubQuest* InSequenceSubQuest)
 		{
@@ -427,20 +427,20 @@ namespace GameQuest
 						bIsExpand = bExpand;
 						if (bIsExpand)
 						{
-							for (const auto& [Tag, Node] : FinishedTagMap)
+							for (const auto& [Tag, Node] : RerouteTagMap)
 							{
-								NextSequenceListNode.RemoveFinishedTagSequence(TreeList, Node);
+								NextSequenceListNode.RemoveRerouteTagSequence(TreeList, Node);
 								const TSharedPtr<FSequenceNodeBase> SequenceWidget = SubTreeList->SequenceWidgetMap.FindRef(Node.Tag.PreSubQuestSequence);
-								SequenceWidget->ShowFinishedTagSequences(Node.Tag, TreeList, Node);
+								SequenceWidget->ShowRerouteTagSequences(Node.Tag, TreeList, Node);
 							}
 						}
 						else
 						{
-							for (const auto& [Tag, Node] : FinishedTagMap)
+							for (const auto& [Tag, Node] : RerouteTagMap)
 							{
 								const TSharedPtr<FSequenceNodeBase> SequenceWidget = SubTreeList->SequenceWidgetMap.FindRef(Node.Tag.PreSubQuestSequence);
-								SequenceWidget->HiddenFinishedTagSequences(Node.Tag, TreeList, Node);
-								NextSequenceListNode.AddFinishedTagSequences(TreeList, Node);
+								SequenceWidget->HiddenRerouteTagSequences(Node.Tag, TreeList, Node);
+								NextSequenceListNode.AddRerouteTagSequences(TreeList, Node);
 							}
 						}
 					})
@@ -491,46 +491,46 @@ namespace GameQuest
 		}
 		void BuildNextSequences(SGameQuestTreeListBase* TreeList, const UGameQuestGraphBase* Quest) override
 		{
-			for (const FGameQuestSequenceSubQuestFinishedTag& FinishedTag : SequenceSubQuest->FinishedTags)
+			for (const FGameQuestSequenceSubQuestRerouteTag& RerouteTag : SequenceSubQuest->RerouteTags)
 			{
-				if (FinishedTagMap.Contains(FinishedTag.TagName))
+				if (RerouteTagMap.Contains(RerouteTag.TagName))
 				{
 					continue;
 				}
-				const TSharedRef<SWidget> TagWidget = TreeList->CreateFinishedTagWidget(Quest, SequenceSubQuest, FinishedTag);
-				FFinishedTagNode& FinishedTagNode = FinishedTagMap.Add(FinishedTag.TagName, { FinishedTag, TagWidget });
+				const TSharedRef<SWidget> TagWidget = TreeList->CreateRerouteTagWidget(Quest, SequenceSubQuest, RerouteTag);
+				FRerouteTagNode& RerouteTagNode = RerouteTagMap.Add(RerouteTag.TagName, { RerouteTag, TagWidget });
 
-				const TSharedPtr<FSequenceNodeBase> SequenceWidget = SubTreeList->SequenceWidgetMap.FindRef(FinishedTag.PreSubQuestSequence);
-				for (const uint16 SequenceId : FinishedTag.NextSequences)
+				const TSharedPtr<FSequenceNodeBase> SequenceWidget = SubTreeList->SequenceWidgetMap.FindRef(RerouteTag.PreSubQuestSequence);
+				for (const uint16 SequenceId : RerouteTag.NextSequences)
 				{
 					FGameQuestSequenceBase* Sequence = Quest->GetSequencePtr(SequenceId);
 					const TSharedRef<SWidget> Header = TreeList->CreateSequenceHeader(Quest, SequenceId, Sequence);
 					const TSharedRef<SWidget> Content = TreeList->CreateSequenceContent(Quest, SequenceId, Sequence);
-					FinishedTagNode.Sequences.Add({ SequenceId, Sequence, Header, Content });
+					RerouteTagNode.Sequences.Add({ SequenceId, Sequence, Header, Content });
 				}
 				if (bIsExpand)
 				{
-					SequenceWidget->ShowFinishedTagSequences(FinishedTag, TreeList, FinishedTagNode);
+					SequenceWidget->ShowRerouteTagSequences(RerouteTag, TreeList, RerouteTagNode);
 				}
 				else
 				{
-					NextSequenceListNode.AddFinishedTagSequences(TreeList, FinishedTagNode);
+					NextSequenceListNode.AddRerouteTagSequences(TreeList, RerouteTagNode);
 				}
 			}
 		}
-		void ShowFinishedTagSequences(const FGameQuestSequenceSubQuestFinishedTag& FinishedTag, SGameQuestTreeListBase* OwnerTreeList, const FFinishedTagNode& FinishedTagNode) override
+		void ShowRerouteTagSequences(const FGameQuestSequenceSubQuestRerouteTag& RerouteTag, SGameQuestTreeListBase* OwnerTreeList, const FRerouteTagNode& RerouteTagNode) override
 		{
-			const FGameQuestSequenceSubQuestFinishedTag* SubFinishedTag = SequenceSubQuest->FinishedTags.FindByPredicate([&](const FGameQuestSequenceSubQuestFinishedTag& E){ return E.TagName == FinishedTag.PreFinishedTagName; });
-			check(SubFinishedTag);
-			const TSharedPtr<FSequenceNodeBase> SequenceWidget = SubTreeList->SequenceWidgetMap.FindRef(SubFinishedTag->PreSubQuestSequence);
-			SequenceWidget->ShowFinishedTagSequences(*SubFinishedTag, OwnerTreeList, FinishedTagNode);
+			const FGameQuestSequenceSubQuestRerouteTag* SubRerouteTag = SequenceSubQuest->RerouteTags.FindByPredicate([&](const FGameQuestSequenceSubQuestRerouteTag& E){ return E.TagName == RerouteTag.PreRerouteTagName; });
+			check(SubRerouteTag);
+			const TSharedPtr<FSequenceNodeBase> SequenceWidget = SubTreeList->SequenceWidgetMap.FindRef(SubRerouteTag->PreSubQuestSequence);
+			SequenceWidget->ShowRerouteTagSequences(*SubRerouteTag, OwnerTreeList, RerouteTagNode);
 		}
-		void HiddenFinishedTagSequences(const FGameQuestSequenceSubQuestFinishedTag& FinishedTag, SGameQuestTreeListBase* OwnerTreeList, const FFinishedTagNode& FinishedTagNode) override
+		void HiddenRerouteTagSequences(const FGameQuestSequenceSubQuestRerouteTag& RerouteTag, SGameQuestTreeListBase* OwnerTreeList, const FRerouteTagNode& RerouteTagNode) override
 		{
-			const FGameQuestSequenceSubQuestFinishedTag* SubFinishedTag = SequenceSubQuest->FinishedTags.FindByPredicate([&](const FGameQuestSequenceSubQuestFinishedTag& E){ return E.TagName == FinishedTag.PreFinishedTagName; });
-			check(SubFinishedTag);
-			const TSharedPtr<FSequenceNodeBase> SequenceWidget = SubTreeList->SequenceWidgetMap.FindRef(SubFinishedTag->PreSubQuestSequence);
-			SequenceWidget->HiddenFinishedTagSequences(*SubFinishedTag, OwnerTreeList, FinishedTagNode);
+			const FGameQuestSequenceSubQuestRerouteTag* SubRerouteTag = SequenceSubQuest->RerouteTags.FindByPredicate([&](const FGameQuestSequenceSubQuestRerouteTag& E){ return E.TagName == RerouteTag.PreRerouteTagName; });
+			check(SubRerouteTag);
+			const TSharedPtr<FSequenceNodeBase> SequenceWidget = SubTreeList->SequenceWidgetMap.FindRef(SubRerouteTag->PreSubQuestSequence);
+			SequenceWidget->HiddenRerouteTagSequences(*SubRerouteTag, OwnerTreeList, RerouteTagNode);
 		}
 	};
 
@@ -550,13 +550,13 @@ namespace GameQuest
 		{
 			NextSequenceListNode.AddNextSequences(TreeList, Quest, Sequence->GetNextSequences());
 		}
-		void ShowFinishedTagSequences(const FGameQuestSequenceSubQuestFinishedTag& FinishedTag, SGameQuestTreeListBase* OwnerTreeList, const FFinishedTagNode& FinishedTagNode) override
+		void ShowRerouteTagSequences(const FGameQuestSequenceSubQuestRerouteTag& RerouteTag, SGameQuestTreeListBase* OwnerTreeList, const FRerouteTagNode& RerouteTagNode) override
 		{
-			NextSequenceListNode.AddFinishedTagSequences(OwnerTreeList, FinishedTagNode);
+			NextSequenceListNode.AddRerouteTagSequences(OwnerTreeList, RerouteTagNode);
 		}
-		void HiddenFinishedTagSequences(const FGameQuestSequenceSubQuestFinishedTag& FinishedTag, SGameQuestTreeListBase* OwnerTreeList, const FFinishedTagNode& FinishedTagNode) override
+		void HiddenRerouteTagSequences(const FGameQuestSequenceSubQuestRerouteTag& RerouteTag, SGameQuestTreeListBase* OwnerTreeList, const FRerouteTagNode& RerouteTagNode) override
 		{
-			NextSequenceListNode.RemoveFinishedTagSequence(OwnerTreeList, FinishedTagNode);
+			NextSequenceListNode.RemoveRerouteTagSequence(OwnerTreeList, RerouteTagNode);
 		}
 	};
 
@@ -784,14 +784,14 @@ public:
 		IGameQuestTreeListSubQuest::Execute_WhenSetSubQuest(UserWidget, Quest, *SequenceSubQuest, SequenceSubQuest->SubQuestInstance);
 		return UserWidget->TakeWidget();
 	}
-	TSharedRef<SWidget> CreateFinishedTagWidget(const UGameQuestGraphBase* Quest, FGameQuestSequenceSubQuest* SequenceSubQuest, const FGameQuestSequenceSubQuestFinishedTag& FinishedTag) const override
+	TSharedRef<SWidget> CreateRerouteTagWidget(const UGameQuestGraphBase* Quest, FGameQuestSequenceSubQuest* SequenceSubQuest, const FGameQuestSequenceSubQuestRerouteTag& RerouteTag) const override
 	{
-		if (Owner->FinishedTagWidget == nullptr || !ensure(Owner->FinishedTagWidget->ImplementsInterface(UGameQuestTreeListFinishedTag::StaticClass())))
+		if (Owner->RerouteTagWidget == nullptr || !ensure(Owner->RerouteTagWidget->ImplementsInterface(UGameQuestTreeListRerouteTag::StaticClass())))
 		{
-			return SNew(STextBlock).Text(FText::FromName(FinishedTag.TagName));
+			return SNew(STextBlock).Text(FText::FromName(RerouteTag.TagName));
 		}
-		UUserWidget* UserWidget = CreateWidget<UUserWidget>(Owner, Owner->FinishedTagWidget);
-		IGameQuestTreeListFinishedTag::Execute_WhenSetFinishedTag(UserWidget, Quest, FinishedTag.TagName);
+		UUserWidget* UserWidget = CreateWidget<UUserWidget>(Owner, Owner->RerouteTagWidget);
+		IGameQuestTreeListRerouteTag::Execute_WhenSetRerouteTag(UserWidget, Quest, RerouteTag.TagName);
 		return UserWidget->TakeWidget();
 	}
 };

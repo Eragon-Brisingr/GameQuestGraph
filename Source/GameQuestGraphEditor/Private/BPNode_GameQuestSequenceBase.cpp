@@ -716,12 +716,12 @@ void UBPNode_GameQuestSequenceSubQuest::AllocateDefaultPins()
 			}
 		}
 
-		for (const FName& FinishedTag : Class.GetDefaultObject()->GetFinishedTagNames())
+		for (const FName& RerouteTag : Class.GetDefaultObject()->GetRerouteTagNames())
 		{
-			CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Exec, NAME_None, FinishedTag);
+			CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Exec, NAME_None, RerouteTag);
 		}
 	}
-	CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Exec, NAME_None, FGameQuestFinishedTag::FinishCompletedTagName);
+	CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Exec, NAME_None, FGameQuestRerouteTag::FinishCompletedTagName);
 
 	UEdGraphPin* ReturnValuePin = CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Struct, GetNodeStruct(), UEdGraphSchema_K2::PN_ReturnValue);
 	ReturnValuePin->bAdvancedView = true;
@@ -808,7 +808,7 @@ void UBPNode_GameQuestSequenceSubQuest::ExpandNode(FKismetCompilerContext& Compi
 		}
 		UK2Node_Event* PostFinishTagEvent = CompilerContext.SpawnIntermediateEventNode<UK2Node_Event>(this, nullptr, SourceGraph);
 		PostFinishTagEvent->bInternalEvent = true;
-		PostFinishTagEvent->CustomFunctionName = FGameQuestFinishedTag::MakeEventName(RefVarName, Pin->GetFName());
+		PostFinishTagEvent->CustomFunctionName = FGameQuestRerouteTag::MakeEventName(RefVarName, Pin->GetFName());
 		PostFinishTagEvent->AllocateDefaultPins();
 		CompilerContext.MovePinLinksToIntermediate(*FinishPin, *PostFinishTagEvent->FindPinChecked(UEdGraphSchema_K2::PN_Then));
 	}

@@ -6,7 +6,7 @@
 #include "BPNode_GameQuestNodeBase.h"
 #include "BlueprintConnectionDrawingPolicy.h"
 #include "BPNode_GameQuestElementBase.h"
-#include "BPNode_GameQuestFinishedTag.h"
+#include "BPNode_GameQuestRerouteTag.h"
 #include "BPNode_GameQuestSequenceBase.h"
 #include "GameQuestElementBase.h"
 #include "GameQuestGraphBase.h"
@@ -40,11 +40,11 @@ public:
 		TMap<FName, FNode> QuestNodeMap;
 		struct FTagNode
 		{
-			UBPNode_GameQuestFinishedTag* Node;
+			UBPNode_GameQuestRerouteTag* Node;
 			FArrangedWidget& Widget;
 		};
-		TArray<FTagNode> FinishedTagNodes;
-		TMap<FName, TArray<FTagNode>> FinishedTagNodeMap;
+		TArray<FTagNode> RerouteTagNodes;
+		TMap<FName, TArray<FTagNode>> RerouteTagNodeMap;
 		for (int32 NodeIndex = 0; NodeIndex < ArrangedNodes.Num(); ++NodeIndex)
 		{
 			FArrangedWidget& CurWidget = ArrangedNodes[NodeIndex];
@@ -53,10 +53,10 @@ public:
 			{
 				QuestNodeMap.Add(QuestNode->GetRefVarName(), { QuestNode, CurWidget });
 			}
-			else if (UBPNode_GameQuestFinishedTag* FinishedTagNode = Cast<UBPNode_GameQuestFinishedTag>(ChildNode->GetNodeObj()))
+			else if (UBPNode_GameQuestRerouteTag* RerouteTagNode = Cast<UBPNode_GameQuestRerouteTag>(ChildNode->GetNodeObj()))
 			{
-				FinishedTagNodes.Add({ FinishedTagNode, CurWidget });
-				FinishedTagNodeMap.FindOrAdd(FinishedTagNode->FinishedTag).Add({ FinishedTagNode, CurWidget });
+				RerouteTagNodes.Add({ RerouteTagNode, CurWidget });
+				RerouteTagNodeMap.FindOrAdd(RerouteTagNode->RerouteTag).Add({ RerouteTagNode, CurWidget });
 			}
 		}
 
@@ -138,7 +138,7 @@ public:
 				}
 			}
 
-			for (const auto& [TagName, PreNodes] : Class->FinishedTagPreNodesMap)
+			for (const auto& [TagName, PreNodes] : Class->RerouteTagPreNodesMap)
 			{
 				for (const auto& PreNode : PreNodes)
 				{
@@ -147,7 +147,7 @@ public:
 					{
 						continue;
 					}
-					const auto TagNodesPtr = FinishedTagNodeMap.Find(TagName);
+					const auto TagNodesPtr = RerouteTagNodeMap.Find(TagName);
 					if (TagNodesPtr == nullptr)
 					{
 						continue;
@@ -289,14 +289,14 @@ public:
 				};
 				FNextActivatedSequenceDrawer{ Quest, DrawQuestConnection, QuestNodeMap }.Draw(StartSequenceId, nullptr);
 			}
-			for (const auto& [FinishedTagNode, Widget] : FinishedTagNodes)
+			for (const auto& [RerouteTagNode, Widget] : RerouteTagNodes)
 			{
-				const FGameQuestFinishedTag* FinishedTag = Quest->GetFinishedTag(FinishedTagNode->FinishedTag);
-				if (FinishedTag == nullptr || FinishedTag->PreSequenceId == GameQuest::IdNone)
+				const FGameQuestRerouteTag* RerouteTag = Quest->GetRerouteTag(RerouteTagNode->RerouteTag);
+				if (RerouteTag == nullptr || RerouteTag->PreSequenceId == GameQuest::IdNone)
 				{
 					continue;
 				}
-				const FGameQuestSequenceBase* Sequence = Quest->GetSequencePtr(FinishedTag->PreSequenceId);
+				const FGameQuestSequenceBase* Sequence = Quest->GetSequencePtr(RerouteTag->PreSequenceId);
 				const FNode* SequenceNode = QuestNodeMap.Find(Sequence->GetNodeName());
 				if (SequenceNode == nullptr)
 				{
@@ -306,7 +306,7 @@ public:
 				{
 					for (const FGameQuestSequenceBranchElement& Branch : SequenceBranch->Branches)
 					{
-						if (Branch.Element != FinishedTag->PreBranchId)
+						if (Branch.Element != RerouteTag->PreBranchId)
 						{
 							continue;
 						}

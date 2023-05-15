@@ -4,10 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "K2Node.h"
-#include "BPNode_GameQuestFinishedTag.generated.h"
+#include "BPNode_GameQuestRerouteTag.generated.h"
 
 UCLASS()
-class GAMEQUESTGRAPHEDITOR_API UBPNode_GameQuestFinishedTag : public UK2Node
+class GAMEQUESTGRAPHEDITOR_API UBPNode_GameQuestRerouteTag : public UK2Node
 {
 	GENERATED_BODY()
 public:
@@ -28,5 +28,5 @@ public:
 	void ExpandNode(FKismetCompilerContext& CompilerContext, UEdGraph* SourceGraph) override;
 
 	UPROPERTY()
-	FName FinishedTag;
+	FName RerouteTag;
 };

@@ -5,7 +5,7 @@
 
 #include "BPNode_GameQuestElementBase.h"
 #include "BPNode_GameQuestEntryEvent.h"
-#include "BPNode_GameQuestFinishedTag.h"
+#include "BPNode_GameQuestRerouteTag.h"
 #include "BPNode_GameQuestNodeBase.h"
 #include "BPNode_GameQuestSequenceBase.h"
 #include "GameQuestGraphBase.h"
@@ -37,7 +37,7 @@ struct FQuestNodeCollector
 	TMap<UBPNode_GameQuestNodeBase*, TArray<UBPNode_GameQuestNodeBase*, TInlineAllocator<1>>> SuccessorNodeMap;
 	TMap<UBPNode_GameQuestNodeBase*, TArray<UBPNode_GameQuestNodeBase*, TInlineAllocator<1>>> PreviousNodeMap;
 	TArray<UBPNode_GameQuestSequenceBase*> SequenceNodes;
-	TArray<UBPNode_GameQuestFinishedTag*> FinishedTagNodes;
+	TArray<UBPNode_GameQuestRerouteTag*> RerouteTagNodes;
 	struct FNodePin
 	{
 		UBPNode_GameQuestNodeBase* Node;
@@ -47,14 +47,14 @@ struct FQuestNodeCollector
 			return LHS.Node == RHS.Node && LHS.EventName == RHS.EventName;
 		}
 	};
-	TMap<FName, TArray<FNodePin, TInlineAllocator<1>>> FinishedTagPreNodesMap;
+	TMap<FName, TArray<FNodePin, TInlineAllocator<1>>> RerouteTagPreNodesMap;
 	TMap<UBPNode_GameQuestNodeBase*, TArray<FNodePin, TInlineAllocator<1>>> NodeFromEventPinMap;
 	void DeepSearch(UEdGraphNode* Node, UEdGraphNode* FromNode, UEdGraphPin* FromPin, TSet<UEdGraphNode*>& Visited)
 	{
-		if (UBPNode_GameQuestFinishedTag* FinishedTagNode = Cast<UBPNode_GameQuestFinishedTag>(Node))
+		if (UBPNode_GameQuestRerouteTag* RerouteTagNode = Cast<UBPNode_GameQuestRerouteTag>(Node))
 		{
-			FinishedTagNodes.Add(FinishedTagNode);
-			auto& PreNodes = FinishedTagPreNodesMap.FindOrAdd(FinishedTagNode->FinishedTag);
+			RerouteTagNodes.Add(RerouteTagNode);
+			auto& PreNodes = RerouteTagPreNodesMap.FindOrAdd(RerouteTagNode->RerouteTag);
 			if (UBPNode_GameQuestNodeBase* QuestNode = Cast<UBPNode_GameQuestNodeBase>(FromNode))
 			{
 				PreNodes.AddUnique({ QuestNode, FromPin ? FromPin->GetFName() : NAME_None });
@@ -169,7 +169,7 @@ void FGameQuestGraphCompilerContext::PreCompile()
 	{
 		FCompilerResultsLog& MessageLog;
 		TSet<UEdGraphNode*> Visited;
-		static bool IsGameQuestNode(const UEdGraphNode* Node) { return Node->IsA<UBPNode_GameQuestNodeBase>() || Node->IsA<UBPNode_GameQuestEntryEvent>() || Node->IsA<UBPNode_GameQuestFinishedTag>(); }
+		static bool IsGameQuestNode(const UEdGraphNode* Node) { return Node->IsA<UBPNode_GameQuestNodeBase>() || Node->IsA<UBPNode_GameQuestEntryEvent>() || Node->IsA<UBPNode_GameQuestRerouteTag>(); }
 		bool Check(UEdGraphNode* Node)
 		{
 			if (Visited.Contains(Node))
@@ -297,21 +297,21 @@ void FGameQuestGraphCompilerContext::CreateClassVariablesFromBlueprint()
 		SequenceNode->CreateClassVariablesFromNode(*this);
 	}
 
-	TSet<FName> FinishedTags;
-	for (const UBPNode_GameQuestFinishedTag* FinishedTagNode : QuestNodeCollector->FinishedTagNodes)
+	TSet<FName> RerouteTags;
+	for (const UBPNode_GameQuestRerouteTag* RerouteTagNode : QuestNodeCollector->RerouteTagNodes)
 	{
-		if (FinishedTagNode->FinishedTag == NAME_None)
+		if (RerouteTagNode->RerouteTag == NAME_None)
 		{
 			continue;
 		}
-		FinishedTags.Add(FinishedTagNode->FinishedTag);
+		RerouteTags.Add(RerouteTagNode->RerouteTag);
 	}
-	for (const FName& FinishedTag : FinishedTags)
+	for (const FName& RerouteTag : RerouteTags)
 	{
-		const FName PropertyName = FGameQuestFinishedTag::MakeVariableName(FinishedTag);
-		if (FStructProperty* Property = CastField<FStructProperty>(CreateVariable(PropertyName, FEdGraphPinType(UEdGraphSchema_K2::PC_Struct, NAME_None, FGameQuestFinishedTag::StaticStruct(), EPinContainerType::None, false, FEdGraphTerminalType()))))
+		const FName PropertyName = FGameQuestRerouteTag::MakeVariableName(RerouteTag);
+		if (FStructProperty* Property = CastField<FStructProperty>(CreateVariable(PropertyName, FEdGraphPinType(UEdGraphSchema_K2::PC_Struct, NAME_None, FGameQuestRerouteTag::StaticStruct(), EPinContainerType::None, false, FEdGraphTerminalType()))))
 		{
-			Property->SetMetaData(TEXT("GameQuestFinishedTag"), TEXT("True"));
+			Property->SetMetaData(TEXT("GameQuestRerouteTag"), TEXT("True"));
 		}
 		else
 		{
@@ -374,7 +374,7 @@ void FGameQuestGraphCompilerContext::CopyTermDefaultsToDefaultObject(UObject* De
 	Class->NodeToSuccessorMap.Empty();
 	Class->NodeToPredecessorMap.Empty();
 	Class->NodeIdEventNameMap.Empty();
-	Class->FinishedTagPreNodesMap.Empty();
+	Class->RerouteTagPreNodesMap.Empty();
 
 	for (UBPNode_GameQuestSequenceBase* SequenceNode : QuestNodeCollector->SequenceNodes)
 	{
@@ -401,13 +401,13 @@ void FGameQuestGraphCompilerContext::CopyTermDefaultsToDefaultObject(UObject* De
 			Class->NodeIdEventNameMap.FindOrAdd(QuestNode->NodeId).Add({ NodePin.EventName, Node->NodeId });
 		}
 	}
-	for (const auto& [FinishedTag, PreNodes] : QuestNodeCollector->FinishedTagPreNodesMap)
+	for (const auto& [RerouteTag, PreNodes] : QuestNodeCollector->RerouteTagPreNodesMap)
 	{
 		if (PreNodes.Num() == 0)
 		{
 			continue;
 		}
-		auto& Ids = Class->FinishedTagPreNodesMap.Add(FinishedTag);
+		auto& Ids = Class->RerouteTagPreNodesMap.Add(RerouteTag);
 		for (const auto& PreNode : PreNodes)
 		{
 			Ids.Add({ PreNode.EventName, PreNode.Node->NodeId });

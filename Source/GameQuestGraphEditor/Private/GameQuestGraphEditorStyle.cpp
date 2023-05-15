@@ -52,6 +52,7 @@ FGameQuestGraphSlateStyle::FGameQuestGraphSlateStyle()
 	Style->Set("Graph.Quest", new IMAGE_BRUSH("Quest_64x", FVector2D(16.f, 16.f)));
 	Style->Set("Graph.Event.Start", new IMAGE_BRUSH("QuestStart_64x", FVector2D(16.f, 16.f)));
 	Style->Set("Graph.Event.End", new IMAGE_BRUSH("QuestEnd_64x", FVector2D(16.f, 16.f)));
+	Style->Set("Graph.Reroute", new IMAGE_BRUSH("QuestReroute_64x", FVector2D(16.f, 16.f)));
 	Style->Set("Graph.Event.Interrupt", new IMAGE_BRUSH("QuestInterrupt_64x", FVector2D(16.f, 16.f)));
 
 	FSlateStyleRegistry::RegisterSlateStyle(*Style);

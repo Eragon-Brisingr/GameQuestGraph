@@ -79,9 +79,9 @@ public:
 	virtual const GameQuest::FLogicList& GetLogicList(const FGameQuestNodeBase* Node) const;
 	virtual uint16 GetSequenceId(const FGameQuestSequenceBase* Sequence) const;
 	virtual uint16 GetElementId(const FGameQuestElementBase* Element) const;
-	virtual TArray<FName> GetFinishedTagNames() const;
-	virtual const FGameQuestFinishedTag* GetFinishedTag(const FName& Name) const;
-	virtual void BindingFinishedTags();
+	virtual TArray<FName> GetRerouteTagNames() const;
+	virtual const FGameQuestRerouteTag* GetRerouteTag(const FName& Name) const;
+	virtual void BindingRerouteTags();
 
 	UFUNCTION(BlueprintCallable, Category = "GameQuest")
 	UObject* GetOwner() const { return Owner; }
@@ -133,7 +133,7 @@ private:
 	friend class FGameQuestGraphCompilerContext;
 	friend class UBPNode_GameQuestSequenceBase;
 	friend class UBPNode_GameQuestEntryEvent;
-	friend class UBPNode_GameQuestFinishedTag;
+	friend class UBPNode_GameQuestRerouteTag;
 	friend class UBPNode_GameQuestSequenceSubQuest;
 #endif
 	friend struct FGameQuestPrivateVisitor;
@@ -152,7 +152,7 @@ private:
 	void PostExecuteEntryEvent();
 
 	UFUNCTION(BlueprintCallable, meta = (BlueprintInternalUseOnly = true))
-	void ProcessFinishedTag(FName FinishedTagName, UPARAM(Ref) FGameQuestFinishedTag& FinishedTag);
+	void ProcessRerouteTag(FName RerouteTagName, UPARAM(Ref) FGameQuestRerouteTag& RerouteTag);
 
 	void InvokeFinishQuest();
 	void InvokeInterruptQuest();

@@ -174,7 +174,7 @@ public:
 };
 
 USTRUCT(BlueprintType, BlueprintInternalUseOnly)
-struct GAMEQUESTGRAPH_API FGameQuestSequenceSubQuestFinishedTag
+struct GAMEQUESTGRAPH_API FGameQuestSequenceSubQuestRerouteTag
 {
 	GENERATED_BODY()
 public:
@@ -185,7 +185,7 @@ public:
 	UPROPERTY(VisibleAnywhere)
 	uint16 PreSubQuestBranch = GameQuest::IdNone;
 	UPROPERTY(VisibleAnywhere)
-	FName PreFinishedTagName = NAME_None;
+	FName PreRerouteTagName = NAME_None;
 	UPROPERTY(VisibleAnywhere)
 	TArray<uint16> NextSequences;
 };
@@ -210,7 +210,7 @@ public:
 	FName CustomEntryName = NAME_None;
 
 	UPROPERTY()
-	TArray<FGameQuestSequenceSubQuestFinishedTag> FinishedTags;
+	TArray<FGameQuestSequenceSubQuestRerouteTag> RerouteTags;
 
 	void WhenSequenceActivated(bool bHasAuthority) override;
 	void WhenSequenceDeactivated(bool bHasAuthority) override;
@@ -219,7 +219,7 @@ public:
 	void WhenTick(float DeltaSeconds) override;
 	TArray<uint16> GetNextSequences() const override;
 
-	void ProcessFinishedTag(const FName& FinishedTagName, const FGameQuestFinishedTag& FinishedTag);
+	void ProcessRerouteTag(const FName& RerouteTagName, const FGameQuestRerouteTag& RerouteTag);
 	void WhenSubQuestFinished();
 	void WhenSubQuestInterrupted();
 private:

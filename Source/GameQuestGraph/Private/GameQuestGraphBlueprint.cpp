@@ -27,13 +27,13 @@ void UGameQuestGraphGeneratedClass::Serialize(FArchive& Ar)
 	Ar << NodeIdLogicsMap;
 	Ar << NodeToSuccessorMap;
 	Ar << NodeIdEventNameMap;
-	Ar << FinishedTagPreNodesMap;
+	Ar << RerouteTagPreNodesMap;
 }
 
 void UGameQuestGraphGeneratedClass::PostQuestCDOInitProperties()
 {
 	NodeIdPropertyMap.Empty();
-	FinishedTags.Empty();
+	RerouteTags.Empty();
 	for (TFieldIterator<FStructProperty> It{ this }; It; ++It)
 	{
 		if (It->Struct->IsChildOf(FGameQuestNodeBase::StaticStruct()))
@@ -45,12 +45,12 @@ void UGameQuestGraphGeneratedClass::PostQuestCDOInitProperties()
 			}
 			NodeIdPropertyMap.Add(*NodeIndex, *It);
 		}
-		else if (It->Struct->IsChildOf(FGameQuestFinishedTag::StaticStruct()))
+		else if (It->Struct->IsChildOf(FGameQuestRerouteTag::StaticStruct()))
 		{
-			FString FinishedTagName = It->GetName();
-			if (ensure(FinishedTagName.RemoveFromStart(TEXT("__GQFT_"))))
+			FString RerouteTagName = It->GetName();
+			if (ensure(RerouteTagName.RemoveFromStart(TEXT("__GQRT_"))))
 			{
-				FinishedTags.Add(*FinishedTagName, *It);
+				RerouteTags.Add(*RerouteTagName, *It);
 			}
 		}
 	}
