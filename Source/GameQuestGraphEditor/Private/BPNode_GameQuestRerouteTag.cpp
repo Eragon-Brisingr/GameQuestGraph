@@ -127,6 +127,7 @@ void UBPNode_GameQuestRerouteTag::AllocateDefaultPins()
 	Super::AllocateDefaultPins();
 
 	CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Exec, UEdGraphSchema_K2::PN_Execute);
+	CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Exec, UEdGraphSchema_K2::PN_Then);
 }
 
 void UBPNode_GameQuestRerouteTag::ExpandNode(FKismetCompilerContext& CompilerContext, UEdGraph* SourceGraph)
@@ -152,6 +153,7 @@ void UBPNode_GameQuestRerouteTag::ExpandNode(FKismetCompilerContext& CompilerCon
 	CallTryActivateNode->FindPinChecked(TEXT("RerouteTag"))->MakeLinkTo(GetStructNode->FindPinChecked(RerouteTagName));
 
 	CompilerContext.MovePinLinksToIntermediate(*GetExecPin(), *CallTryActivateNode->GetExecPin());
+	CompilerContext.MovePinLinksToIntermediate(*GetThenPin(), *CallTryActivateNode->GetThenPin());
 }
 
 #undef LOCTEXT_NAMESPACE
