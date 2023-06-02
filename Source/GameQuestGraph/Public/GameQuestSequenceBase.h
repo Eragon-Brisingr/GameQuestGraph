@@ -90,6 +90,7 @@ public:
 	UPROPERTY()
 	TArray<uint16> NextSequences;
 
+	UScriptStruct* GetNodeStruct() const override { return StaticStruct(); }
 	TArray<uint16> GetNextSequences() const override { return NextSequences; }
 
 	void WhenSequenceActivated(bool bHasAuthority) override;
@@ -114,6 +115,7 @@ public:
 
 	TObjectPtr<UFunction> OnSequenceFinished;
 
+	UScriptStruct* GetNodeStruct() const override { return StaticStruct(); }
 	TArray<uint16> GetNextSequences() const override { return NextSequences; }
 
 	void WhenSequenceActivated(bool bHasAuthority) override;
@@ -160,6 +162,7 @@ public:
 
 	uint8 bIsBranchesActivated : 1;
 
+	UScriptStruct* GetNodeStruct() const override { return StaticStruct(); }
 	TArray<uint16> GetNextSequences() const override;
 
 	void WhenSequenceActivated(bool bHasAuthority) override;

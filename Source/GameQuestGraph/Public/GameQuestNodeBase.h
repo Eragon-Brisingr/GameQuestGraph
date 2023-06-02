@@ -17,8 +17,8 @@ struct GAMEQUESTGRAPH_API FGameQuestNodeBase
 public:
 	virtual ~FGameQuestNodeBase() = default;
 
-	UScriptStruct* GetNodeStruct() const { return NodeProperty->Struct; }
-	FName GetNodeName() const { return NodeProperty->GetFName(); }
+	virtual UScriptStruct* GetNodeStruct() const { return NodeProperty->Struct; }
+	virtual FName GetNodeName() const { return NodeProperty->GetFName(); }
 
 	TObjectPtr<UGameQuestGraphBase> OwnerQuest = nullptr;
 	TObjectPtr<UFunction> EvaluateParamsFunction = nullptr;
