@@ -34,18 +34,14 @@ public:
 	virtual bool ReplicateSubobject(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags);
 private:
 	uint8 bIsActivated : 1;
-	UPROPERTY(Replicated)
+	UPROPERTY(Replicated, SaveGame)
 	uint8 bInterrupted : 1;
 
-	UPROPERTY(Replicated)
-	TObjectPtr<UObject> Owner = nullptr;
-	FGameQuestSequenceSubQuest* OwnerNode = nullptr;
-
-	UPROPERTY(Replicated)
+	UPROPERTY(Replicated, SaveGame)
 	TArray<uint16> StartSequences;
 
 	TSet<uint16> PreActivatedSequences;
-	UPROPERTY(ReplicatedUsing = OnRep_ActivatedSequences)
+	UPROPERTY(ReplicatedUsing = OnRep_ActivatedSequences, SaveGame)
 	TArray<uint16> ActivatedSequences;
 	UFUNCTION()
 	void OnRep_ActivatedSequences();
@@ -71,6 +67,10 @@ private:
 	void PreSequenceActivated(FGameQuestSequenceBase* Sequence, uint16 SequenceId);
 	void PostSequenceDeactivated(FGameQuestSequenceBase* Sequence, uint16 SequenceId);
 protected:
+	UPROPERTY(Replicated)
+	TObjectPtr<UObject> Owner = nullptr;
+	FGameQuestSequenceSubQuest* OwnerNode = nullptr;
+
 	virtual void WhenPreSequenceActivated(FGameQuestSequenceBase* Sequence, uint16 SequenceId) {}
 	virtual void WhenPostSequenceDeactivated(FGameQuestSequenceBase* Sequence, uint16 SequenceId) {}
 public:

@@ -689,7 +689,7 @@ void UBPNode_GameQuestNodeBase::CreateClassVariablesFromNode(FGameQuestGraphComp
 		const FName RefVarName = GetRefVarName();
 		if (FStructProperty* Property = CastField<FStructProperty>(CompilerContext.CreateVariable(RefVarName, FEdGraphPinType(UEdGraphSchema_K2::PC_Struct, NAME_None, NodeStruct, EPinContainerType::None, false, FEdGraphTerminalType()))))
 		{
-			Property->SetPropertyFlags(CPF_Edit | CPF_BlueprintVisible);
+			Property->SetPropertyFlags(CPF_Edit | CPF_BlueprintVisible | CPF_SaveGame);
 			Property->SetMetaData(TEXT("Category"), TEXT("Quest"));
 			Property->SetMetaData(TEXT("GameQuestNode"), TEXT("True"));
 

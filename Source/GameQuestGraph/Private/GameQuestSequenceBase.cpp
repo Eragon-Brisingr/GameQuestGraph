@@ -345,6 +345,16 @@ TArray<uint16> FGameQuestSequenceBranch::GetNextSequences() const
 	return NextSequences;
 }
 
+TArray<uint16> FGameQuestSequenceBranch::GetElementIds() const
+{
+	TArray<uint16> AllElementIds{ Elements };
+	for (const FGameQuestSequenceBranchElement& Branch : Branches)
+	{
+		AllElementIds.Add(Branch.Element);
+	}
+	return AllElementIds;
+}
+
 void FGameQuestSequenceBranch::WhenSequenceActivated(bool bHasAuthority)
 {
 	for (const uint16 ElementId : Elements)

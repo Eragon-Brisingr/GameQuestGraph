@@ -65,6 +65,7 @@ public:
 	EState GetSequenceState() const;
 
 	virtual TArray<uint16> GetNextSequences() const { unimplemented(); return {}; }
+	virtual TArray<uint16> GetElementIds() const { unimplemented(); return {}; }
 protected:
 	virtual bool IsTickable() const { return false; }
 	virtual void WhenTick(float DeltaSeconds) {}
@@ -87,11 +88,12 @@ public:
 	UPROPERTY(NotReplicated)
 	uint16 Element;
 
-	UPROPERTY()
+	UPROPERTY(SaveGame)
 	TArray<uint16> NextSequences;
 
 	UScriptStruct* GetNodeStruct() const override { return StaticStruct(); }
 	TArray<uint16> GetNextSequences() const override { return NextSequences; }
+	TArray<uint16> GetElementIds() const override { return { Element }; }
 
 	void WhenSequenceActivated(bool bHasAuthority) override;
 	void WhenSequenceDeactivated(bool bHasAuthority) override;
@@ -110,13 +112,14 @@ public:
 	UPROPERTY(NotReplicated)
 	TArray<uint16> Elements;
 
-	UPROPERTY()
+	UPROPERTY(SaveGame)
 	TArray<uint16> NextSequences;
 
 	TObjectPtr<UFunction> OnSequenceFinished;
 
 	UScriptStruct* GetNodeStruct() const override { return StaticStruct(); }
 	TArray<uint16> GetNextSequences() const override { return NextSequences; }
+	TArray<uint16> GetElementIds() const override { return Elements; }
 
 	void WhenSequenceActivated(bool bHasAuthority) override;
 	void WhenSequenceDeactivated(bool bHasAuthority) override;
@@ -139,9 +142,9 @@ public:
 	uint16 Element = 0;
 	UPROPERTY(VisibleAnywhere, NotReplicated)
 	uint8 bAutoDeactivateOtherBranch : 1;
-	UPROPERTY(VisibleAnywhere, NotReplicated)
+	UPROPERTY(VisibleAnywhere, NotReplicated, SaveGame)
 	uint8 bInterrupted : 1;
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, SaveGame)
 	TArray<uint16> NextSequences;
 };
 
@@ -157,13 +160,14 @@ public:
 	UPROPERTY(NotReplicated)
 	TArray<uint16> Elements;
 
-	UPROPERTY()
+	UPROPERTY(SaveGame)
 	TArray<FGameQuestSequenceBranchElement> Branches;
 
 	uint8 bIsBranchesActivated : 1;
 
 	UScriptStruct* GetNodeStruct() const override { return StaticStruct(); }
 	TArray<uint16> GetNextSequences() const override;
+	TArray<uint16> GetElementIds() const override;
 
 	void WhenSequenceActivated(bool bHasAuthority) override;
 	void WhenSequenceDeactivated(bool bHasAuthority) override;
@@ -181,15 +185,15 @@ struct GAMEQUESTGRAPH_API FGameQuestSequenceSubQuestRerouteTag
 {
 	GENERATED_BODY()
 public:
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, SaveGame)
 	FName TagName;
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, SaveGame)
 	uint16 PreSubQuestSequence = GameQuest::IdNone;
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, SaveGame)
 	uint16 PreSubQuestBranch = GameQuest::IdNone;
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, SaveGame)
 	FName PreRerouteTagName = NAME_None;
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, SaveGame)
 	TArray<uint16> NextSequences;
 };
 
@@ -206,13 +210,13 @@ public:
 	UPROPERTY(NotReplicated)
 	TSoftClassPtr<UGameQuestGraphBase> SubQuestClass;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, SaveGame)
 	TObjectPtr<UGameQuestGraphBase> SubQuestInstance;
 
 	UPROPERTY()
 	FName CustomEntryName = NAME_None;
 
-	UPROPERTY()
+	UPROPERTY(SaveGame)
 	TArray<FGameQuestSequenceSubQuestRerouteTag> RerouteTags;
 
 	void WhenSequenceActivated(bool bHasAuthority) override;
@@ -221,6 +225,7 @@ public:
 	bool IsTickable() const override { return true; }
 	void WhenTick(float DeltaSeconds) override;
 	TArray<uint16> GetNextSequences() const override;
+	TArray<uint16> GetElementIds() const override { return {}; }
 
 	void ProcessRerouteTag(const FName& RerouteTagName, const FGameQuestRerouteTag& RerouteTag);
 	void WhenSubQuestFinished();

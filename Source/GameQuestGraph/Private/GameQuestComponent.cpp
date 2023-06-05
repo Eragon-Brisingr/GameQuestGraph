@@ -27,19 +27,26 @@ void UGameQuestComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 
 void UGameQuestComponent::Activate(bool bReset)
 {
+	const bool bShouldActivate = ShouldActivate();
 	Super::Activate(bReset);
 
-	for (UGameQuestGraphBase* Quest : ActivatedQuests)
+	if (bShouldActivate)
 	{
-		Quest->ReactiveQuest();
+		for (UGameQuestGraphBase* Quest : ActivatedQuests)
+		{
+			Quest->ReactiveQuest();
+		}
 	}
 }
 
 void UGameQuestComponent::Deactivate()
 {
-	for (UGameQuestGraphBase* Quest : ActivatedQuests)
+	if (ShouldActivate() == false)
 	{
-		Quest->DeactivateQuest();
+		for (UGameQuestGraphBase* Quest : ActivatedQuests)
+		{
+			Quest->DeactivateQuest();
+		}
 	}
 	Super::Deactivate();
 }

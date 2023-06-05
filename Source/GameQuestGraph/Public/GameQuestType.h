@@ -42,9 +42,9 @@ struct GAMEQUESTGRAPH_API FGameQuestRerouteTag
 	GENERATED_BODY()
 public:
 	TObjectPtr<UFunction> Event = nullptr;
-	UPROPERTY(Transient)
+	UPROPERTY(SaveGame)
 	uint16 PreSequenceId = GameQuest::IdNone;
-	UPROPERTY(Transient)
+	UPROPERTY(SaveGame)
 	uint16 PreBranchId = GameQuest::IdNone;
 
 	static const FName FinishCompletedTagName;

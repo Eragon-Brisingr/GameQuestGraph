@@ -311,6 +311,7 @@ void FGameQuestGraphCompilerContext::CreateClassVariablesFromBlueprint()
 		const FName PropertyName = FGameQuestRerouteTag::MakeVariableName(RerouteTag);
 		if (FStructProperty* Property = CastField<FStructProperty>(CreateVariable(PropertyName, FEdGraphPinType(UEdGraphSchema_K2::PC_Struct, NAME_None, FGameQuestRerouteTag::StaticStruct(), EPinContainerType::None, false, FEdGraphTerminalType()))))
 		{
+			Property->SetPropertyFlags(CPF_SaveGame);
 			Property->SetMetaData(TEXT("GameQuestRerouteTag"), TEXT("True"));
 		}
 		else
