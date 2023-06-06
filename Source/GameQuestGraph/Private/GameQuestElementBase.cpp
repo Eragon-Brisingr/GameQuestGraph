@@ -514,6 +514,11 @@ void FGameQuestElementScript::WhenQuestInitProperties(const FStructProperty* Pro
 	}
 }
 
+AActor* UGameQuestElementScriptable::GetOwnerActor() const
+{
+	return Owner->OwnerQuest->GetOwnerActor();
+}
+
 bool FGameQuestElementScript::ReplicateSubobject(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
 {
 	bool WroteSomething = false;
@@ -525,9 +530,26 @@ bool FGameQuestElementScript::ReplicateSubobject(UActorChannel* Channel, FOutBun
 	return WroteSomething;
 }
 
-AActor* UGameQuestElementScriptable::GetOwnerActor() const
+void FGameQuestElementScript::FinishElementByName(const FName& EventName)
 {
-	return Owner->OwnerQuest->GetOwnerActor();
+	if (!ensure(Instance))
+	{
+		return;
+	}
+	if (EventName == NAME_None)
+	{
+		FinishElement({}, NAME_None);
+	}
+	else
+	{
+		const FStructProperty* EventProperty = FindFProperty<FStructProperty>(Instance->GetClass(), EventName);
+		if (!ensure(EventProperty))
+		{
+			return;
+		}
+		const FGameQuestFinishEvent* GameQuestFinishEvent = EventProperty->ContainerPtrToValuePtr<FGameQuestFinishEvent>(Instance);
+		FinishElement(*GameQuestFinishEvent, EventName);
+	}
 }
 
 DEFINE_FUNCTION(UGameQuestElementScriptable::execFinishElement)

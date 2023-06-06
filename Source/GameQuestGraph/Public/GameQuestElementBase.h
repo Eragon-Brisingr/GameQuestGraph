@@ -187,6 +187,7 @@ public:
 	void WhenPreElementDeactivated() override { if (ensure(Instance)) Instance->WhenPreElementDeactivated(); }
 	void WhenTick(float DeltaSeconds) override { if (ensure(Instance)) Instance->WhenTick(DeltaSeconds); }
 	void WhenForceFinishElement(const FName& EventName) override { if (ensure(Instance)) Instance->WhenForceFinishElement(EventName); }
+	void FinishElementByName(const FName& EventName) override;
 
 #if !UE_BUILD_SHIPPING || ALLOW_CONSOLE_IN_SHIPPING
 	TArray<FName, TInlineAllocator<1>> GetActivatedFinishEventNames() const override;

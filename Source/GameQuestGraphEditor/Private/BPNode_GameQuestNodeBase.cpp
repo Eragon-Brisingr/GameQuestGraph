@@ -561,7 +561,7 @@ void UBPNode_GameQuestNodeBase::PinConnectionListChanged(UEdGraphPin* Pin)
 
 	if (Pin->PinType.PinCategory == UEdGraphSchema_K2::PC_Exec)
 	{
-		RecompileSkeletalBlueprintDelayed();
+		FBlueprintEditorUtils::MarkBlueprintAsStructurallyModified(GetBlueprint());
 	}
 }
 

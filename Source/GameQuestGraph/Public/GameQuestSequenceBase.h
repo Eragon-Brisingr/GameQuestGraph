@@ -48,10 +48,10 @@ private:
 
 	void Tick(float DeltaSeconds) { WhenTick(DeltaSeconds); }
 public:
-	UPROPERTY()
+	UPROPERTY(SaveGame)
 	uint16 PreSequence = GameQuest::IdNone;
 	uint8 bIsActivated : 1;
-	UPROPERTY()
+	UPROPERTY(SaveGame)
 	uint8 bInterrupted : 1;
 	void InterruptSequence();
 
