@@ -137,12 +137,12 @@ void UGameQuestComponent::PostStartQuest(UGameQuestGraphBase* StartedQuest)
 
 void UGameQuestComponent::PostFinishQuest(UGameQuestGraphBase* FinishedQuest)
 {
-	WhenQuestDeactivated(FinishedQuest);
-
 	ActivatedQuests.RemoveSingle(FinishedQuest);
 	MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, ActivatedQuests, this);
+	WhenQuestDeactivated(FinishedQuest);
 	FinishedQuests.Add(FinishedQuest);
 	MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, FinishedQuests, this);
+	WhenFinishedQuestAdded(FinishedQuest);
 
 	WhenQuestFinished(FinishedQuest);
 }
