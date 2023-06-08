@@ -32,7 +32,7 @@ public:
 	UPROPERTY(BlueprintReadOnly, NotReplicated)
 	uint8 bIsOptional : 1;
 	uint8 bIsActivated : 1;
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, SaveGame)
 	uint8 bIsFinished : 1;
 	bool IsInterrupted() const;
 

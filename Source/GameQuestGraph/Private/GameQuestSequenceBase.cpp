@@ -548,6 +548,8 @@ void FGameQuestSequenceSubQuest::WhenSequenceActivated(bool bHasAuthority)
 
 	if (SubQuestInstance)
 	{
+		SubQuestInstance->OwnerNode = this;
+		SubQuestInstance->BindingRerouteTags();
 		SubQuestInstance->ReactiveQuest();
 	}
 	else
@@ -563,8 +565,8 @@ void FGameQuestSequenceSubQuest::WhenSequenceActivated(bool bHasAuthority)
 			SubQuestInstance->Owner = OwnerQuest;
 			SubQuestInstance->OwnerNode = this;
 			SubQuestInstance->BindingRerouteTags();
-			using namespace Context;
 			GetEvaluateGraphExposedInputs(bHasAuthority);
+			using namespace Context;
 			TGuardValue FinishedSequenceGuard{ CurrentFinishedSequenceId, GameQuest::IdNone };
 			if (CustomEntryName == NAME_None)
 			{
