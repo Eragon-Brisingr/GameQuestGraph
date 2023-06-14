@@ -717,17 +717,20 @@ void UBPNode_GameQuestNodeBase::CopyTermDefaultsToDefaultNode(FGameQuestGraphCom
 			const FInstancedStruct OldInstance{ MoveTemp(StructNodeInstance) };
 			StructNodeInstance.InitializeAs(NodeStruct);
 			OldStruct->CopyScriptStruct(StructNodeInstance.GetMutableMemory(), OldInstance.GetMemory());
+			RuntimeNode = StructNodeInstance.GetMutablePtr<FGameQuestNodeBase>();
 		}
 		else if (OldStruct->IsChildOf(NodeStruct))
 		{
 			const FInstancedStruct OldInstance{ MoveTemp(StructNodeInstance) };
 			StructNodeInstance.InitializeAs(NodeStruct);
 			NodeStruct->CopyScriptStruct(StructNodeInstance.GetMutableMemory(), OldInstance.GetMemory());
+			RuntimeNode = StructNodeInstance.GetMutablePtr<FGameQuestNodeBase>();
 		}
 		else
 		{
 			ensure(false);
 			StructNodeInstance.InitializeAs(NodeStruct);
+			RuntimeNode = StructNodeInstance.GetMutablePtr<FGameQuestNodeBase>();
 		}
 	}
 	if (ensure(RuntimeNode))

@@ -15,144 +15,7 @@
 
 #define LOCTEXT_NAMESPACE "GameQuestGraphEditor"
 
-void FGameQuestBpNodeDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
-{
-	// Hide the pin options property; it's represented inline per-property instead
-	DetailBuilder.HideCategory(TEXT("PinOptions"));
-
-	UBPNode_GameQuestNodeBase* QuestBPNode = GetFirstNode(DetailBuilder);
-	if (QuestBPNode == nullptr)
-	{
-		return;
-	}
-
-	if (QuestBPNode->StructNodeInstance.IsValid())
-	{
-		TSharedRef<IPropertyHandle> QuestStructProperty = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UBPNode_GameQuestNodeBase, StructNodeInstance), UBPNode_GameQuestNodeBase::StaticClass());
-		DetailBuilder.HideProperty(QuestStructProperty);
-		IDetailCategoryBuilder& CategoryBuilder = DetailBuilder.EditCategory(FObjectEditorUtils::GetCategoryFName(QuestStructProperty->GetProperty()));
-
-		class FQuestStructInstanceDetails : public FInstancedStructDataDetails
-		{
-			using Super = FInstancedStructDataDetails;
-		public:
-			FQuestStructInstanceDetails(TSharedPtr<IPropertyHandle> InStructProperty, UBPNode_GameQuestNodeBase* QuestBPNode, IDetailLayoutBuilder& DetailBuilder)
-				: Super(InStructProperty)
-				, QuestBPNode(QuestBPNode)
-				, DetailBuilder(DetailBuilder)
-			{
-			}
-
-			void OnChildRowAdded(IDetailPropertyRow& ChildRow) override
-			{
-				const TSharedRef<IPropertyHandle> PropertyHandle = ChildRow.GetPropertyHandle().ToSharedRef();
-				FProperty* Property = PropertyHandle->GetProperty();
-				const int32 CustomPinIndex = QuestBPNode->ShowPinForProperties.IndexOfByPredicate([&](const FOptionalPinFromProperty& InOptionalPin)
-				{
-					return Property->GetFName() == InOptionalPin.PropertyName;
-				});
-				if (CustomPinIndex == INDEX_NONE)
-				{
-					return;
-				}
-				const FName OptionalPinArrayEntryName(*FString::Printf(TEXT("ShowPinForProperties[%d].bShowPin"), CustomPinIndex));
-				const TSharedRef<IPropertyHandle> ShowHidePropertyHandle = DetailBuilder.GetProperty(OptionalPinArrayEntryName, UBPNode_GameQuestNodeBase::StaticClass());
-				CreateExposePropertyWidget(Property, PropertyHandle, ChildRow, ShowHidePropertyHandle);
-			}
-
-			UBPNode_GameQuestNodeBase* QuestBPNode;
-			IDetailLayoutBuilder& DetailBuilder;
-		};
-		CategoryBuilder.AddCustomBuilder(MakeShared<FQuestStructInstanceDetails>(QuestStructProperty, QuestBPNode, DetailBuilder));
-	}
-}
-
-UBPNode_GameQuestNodeBase* FGameQuestBpNodeDetails::GetFirstNode(IDetailLayoutBuilder& DetailBuilder) const
-{
-	TArray<TWeakObjectPtr<UObject>> SelectedObjectsList;
-	DetailBuilder.GetObjectsBeingCustomized(SelectedObjectsList);
-
-	// get first Quest nodes
-	UBPNode_GameQuestNodeBase* QuestBPNode = Cast<UBPNode_GameQuestNodeBase>(SelectedObjectsList[0].Get());
-	if (QuestBPNode == nullptr)
-	{
-		return nullptr;
-	}
-
-	// make sure type matches with all the nodes.
-	UBPNode_GameQuestNodeBase* FirstNodeType = QuestBPNode;
-	for (int32 Index = 1; Index < SelectedObjectsList.Num(); ++Index)
-	{
-		UBPNode_GameQuestNodeBase* CurrentNode = Cast<UBPNode_GameQuestNodeBase>(SelectedObjectsList[Index].Get());
-		if (!CurrentNode || CurrentNode->GetClass() != FirstNodeType->GetClass())
-		{
-			// if type mismatches, multi selection doesn't work, just return
-			return nullptr;
-		}
-	}
-
-	return FirstNodeType;
-}
-
-void FGameQuestBpNodeDetails::BuildPinOptionalDetails(IDetailLayoutBuilder& DetailBuilder, UStruct* Class, UClass* NodeClass, const TArray<FOptionalPinFromProperty>& ShowPinOptions, const FString& ShowPinPropertyName)
-{
-	for (TFieldIterator<FProperty> It(Class, EFieldIteratorFlags::IncludeSuper); It; ++It)
-	{
-		const FProperty* InstanceProperty = *It;
-
-		if (InstanceProperty->HasAnyPropertyFlags(CPF_DisableEditOnInstance) || InstanceProperty->HasAllPropertyFlags(CPF_Edit) == false)
-		{
-			DetailBuilder.HideProperty(InstanceProperty->GetFName(), InstanceProperty->GetOwnerClass());
-			continue;
-		}
-
-		const FName PropertyName = InstanceProperty->GetFName();
-		const int32 CustomPinIndex = ShowPinOptions.IndexOfByPredicate([&](const FOptionalPinFromProperty& InOptionalPin)
-		{
-			return PropertyName == InOptionalPin.PropertyName;
-		});
-		if (CustomPinIndex == INDEX_NONE)
-		{
-			continue;
-		}
-
-		TSharedRef<IPropertyHandle> TargetPropertyHandle = DetailBuilder.GetProperty(InstanceProperty->GetFName(), InstanceProperty->GetOwnerStruct());
-		FProperty* TargetProperty = TargetPropertyHandle->GetProperty();
-		if (InstanceProperty != TargetProperty)
-		{
-			continue;
-		}
-
-		IDetailCategoryBuilder& CurrentCategory = DetailBuilder.EditCategory(FObjectEditorUtils::GetCategoryFName(TargetProperty));
-		const FOptionalPinFromProperty& OptionalPin = ShowPinOptions[CustomPinIndex];
-
-		if (OptionalPin.bCanToggleVisibility)
-		{
-			if (!TargetPropertyHandle->GetProperty())
-			{
-				continue;
-			}
-
-			if (TargetPropertyHandle->IsCustomized())
-			{
-				continue;
-			}
-
-			if (OptionalPin.bPropertyIsCustomized)
-			{
-				continue;
-			}
-
-			IDetailPropertyRow& PropertyRow = CurrentCategory.AddProperty(TargetPropertyHandle, TargetProperty->HasAnyPropertyFlags(CPF_AdvancedDisplay) ? EPropertyLocation::Advanced : EPropertyLocation::Default);
-
-			const FName OptionalPinArrayEntryName(*FString::Printf(TEXT("%s[%d].bShowPin"), *ShowPinPropertyName, CustomPinIndex));
-			const TSharedRef<IPropertyHandle> ShowHidePropertyHandle = DetailBuilder.GetProperty(OptionalPinArrayEntryName, NodeClass);
-			CreateExposePropertyWidget(TargetProperty, TargetPropertyHandle, PropertyRow, ShowHidePropertyHandle);
-		}
-	}
-}
-
-void FGameQuestBpNodeDetails::CreateExposePropertyWidget(FProperty* TargetProperty, TSharedRef<IPropertyHandle> TargetPropertyHandle, IDetailPropertyRow& PropertyRow, TSharedRef<IPropertyHandle> ShowHidePropertyHandle)
+void CreateExposePropertyWidget(FProperty* TargetProperty, TSharedRef<IPropertyHandle> TargetPropertyHandle, IDetailPropertyRow& PropertyRow, TSharedRef<IPropertyHandle> ShowHidePropertyHandle)
 {
 	TSharedPtr<SWidget> NameWidget;
 	TSharedPtr<SWidget> ValueWidget;
@@ -249,10 +112,145 @@ void FGameQuestBpNodeDetails::CreateExposePropertyWidget(FProperty* TargetProper
 	];
 }
 
+void BuildPinOptionalDetails(IDetailLayoutBuilder& DetailBuilder, UStruct* Class, UClass* NodeClass, const TArray<FOptionalPinFromProperty>& ShowPinOptions, const FString& ShowPinPropertyName)
+{
+	for (TFieldIterator<FProperty> It(Class, EFieldIteratorFlags::IncludeSuper); It; ++It)
+	{
+		const FProperty* InstanceProperty = *It;
+
+		if (InstanceProperty->HasAnyPropertyFlags(CPF_DisableEditOnInstance) || InstanceProperty->HasAllPropertyFlags(CPF_Edit) == false)
+		{
+			DetailBuilder.HideProperty(InstanceProperty->GetFName(), InstanceProperty->GetOwnerClass());
+			continue;
+		}
+
+		const FName PropertyName = InstanceProperty->GetFName();
+		const int32 CustomPinIndex = ShowPinOptions.IndexOfByPredicate([&](const FOptionalPinFromProperty& InOptionalPin)
+		{
+			return PropertyName == InOptionalPin.PropertyName;
+		});
+		if (CustomPinIndex == INDEX_NONE)
+		{
+			continue;
+		}
+
+		TSharedRef<IPropertyHandle> TargetPropertyHandle = DetailBuilder.GetProperty(InstanceProperty->GetFName(), InstanceProperty->GetOwnerStruct());
+		FProperty* TargetProperty = TargetPropertyHandle->GetProperty();
+		if (InstanceProperty != TargetProperty)
+		{
+			continue;
+		}
+
+		IDetailCategoryBuilder& CurrentCategory = DetailBuilder.EditCategory(FObjectEditorUtils::GetCategoryFName(TargetProperty));
+		const FOptionalPinFromProperty& OptionalPin = ShowPinOptions[CustomPinIndex];
+
+		if (OptionalPin.bCanToggleVisibility)
+		{
+			if (!TargetPropertyHandle->GetProperty())
+			{
+				continue;
+			}
+
+			if (TargetPropertyHandle->IsCustomized())
+			{
+				continue;
+			}
+
+			if (OptionalPin.bPropertyIsCustomized)
+			{
+				continue;
+			}
+
+			IDetailPropertyRow& PropertyRow = CurrentCategory.AddProperty(TargetPropertyHandle, TargetProperty->HasAnyPropertyFlags(CPF_AdvancedDisplay) ? EPropertyLocation::Advanced : EPropertyLocation::Default);
+
+			const FName OptionalPinArrayEntryName(*FString::Printf(TEXT("%s[%d].bShowPin"), *ShowPinPropertyName, CustomPinIndex));
+			const TSharedRef<IPropertyHandle> ShowHidePropertyHandle = DetailBuilder.GetProperty(OptionalPinArrayEntryName, NodeClass);
+			CreateExposePropertyWidget(TargetProperty, TargetPropertyHandle, PropertyRow, ShowHidePropertyHandle);
+		}
+	}
+}
+
+UBPNode_GameQuestNodeBase* GetFirstNode(IDetailLayoutBuilder& DetailBuilder)
+{
+	TArray<TWeakObjectPtr<UObject>> SelectedObjectsList;
+	DetailBuilder.GetObjectsBeingCustomized(SelectedObjectsList);
+
+	// get first Quest nodes
+	UBPNode_GameQuestNodeBase* QuestBPNode = Cast<UBPNode_GameQuestNodeBase>(SelectedObjectsList[0].Get());
+	if (QuestBPNode == nullptr)
+	{
+		return nullptr;
+	}
+
+	// make sure type matches with all the nodes.
+	UBPNode_GameQuestNodeBase* FirstNodeType = QuestBPNode;
+	for (int32 Index = 1; Index < SelectedObjectsList.Num(); ++Index)
+	{
+		UBPNode_GameQuestNodeBase* CurrentNode = Cast<UBPNode_GameQuestNodeBase>(SelectedObjectsList[Index].Get());
+		if (!CurrentNode || CurrentNode->GetClass() != FirstNodeType->GetClass())
+		{
+			// if type mismatches, multi selection doesn't work, just return
+			return nullptr;
+		}
+	}
+
+	return FirstNodeType;
+}
+
+void FGameQuestBpNodeDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
+{
+	// Hide the pin options property; it's represented inline per-property instead
+	DetailBuilder.HideCategory(TEXT("PinOptions"));
+
+	UBPNode_GameQuestNodeBase* QuestBPNode = GetFirstNode(DetailBuilder);
+	if (QuestBPNode == nullptr)
+	{
+		return;
+	}
+
+	if (QuestBPNode->StructNodeInstance.IsValid())
+	{
+		TSharedRef<IPropertyHandle> QuestStructProperty = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UBPNode_GameQuestNodeBase, StructNodeInstance), UBPNode_GameQuestNodeBase::StaticClass());
+		DetailBuilder.HideProperty(QuestStructProperty);
+		IDetailCategoryBuilder& CategoryBuilder = DetailBuilder.EditCategory(FObjectEditorUtils::GetCategoryFName(QuestStructProperty->GetProperty()));
+
+		class FQuestStructInstanceDetails : public FInstancedStructDataDetails
+		{
+			using Super = FInstancedStructDataDetails;
+		public:
+			FQuestStructInstanceDetails(TSharedPtr<IPropertyHandle> InStructProperty, UBPNode_GameQuestNodeBase* QuestBPNode, IDetailLayoutBuilder& DetailBuilder)
+				: Super(InStructProperty)
+				, QuestBPNode(QuestBPNode)
+				, DetailBuilder(DetailBuilder)
+			{
+			}
+
+			void OnChildRowAdded(IDetailPropertyRow& ChildRow) override
+			{
+				const TSharedRef<IPropertyHandle> PropertyHandle = ChildRow.GetPropertyHandle().ToSharedRef();
+				FProperty* Property = PropertyHandle->GetProperty();
+				const int32 CustomPinIndex = QuestBPNode->ShowPinForProperties.IndexOfByPredicate([&](const FOptionalPinFromProperty& InOptionalPin)
+				{
+					return Property->GetFName() == InOptionalPin.PropertyName;
+				});
+				if (CustomPinIndex == INDEX_NONE)
+				{
+					return;
+				}
+				const FName OptionalPinArrayEntryName(*FString::Printf(TEXT("ShowPinForProperties[%d].bShowPin"), CustomPinIndex));
+				const TSharedRef<IPropertyHandle> ShowHidePropertyHandle = DetailBuilder.GetProperty(OptionalPinArrayEntryName, UBPNode_GameQuestNodeBase::StaticClass());
+				CreateExposePropertyWidget(Property, PropertyHandle, ChildRow, ShowHidePropertyHandle);
+			}
+
+			UBPNode_GameQuestNodeBase* QuestBPNode;
+			IDetailLayoutBuilder& DetailBuilder;
+		};
+		CategoryBuilder.AddCustomBuilder(MakeShared<FQuestStructInstanceDetails>(QuestStructProperty, QuestBPNode, DetailBuilder));
+	}
+}
+
 void FGameQuestBpNodeScriptElementDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 {
-	Super::CustomizeDetails(DetailBuilder);
-
 	if (DetailBuilder.HasClassDefaultObject())
 	{
 		DetailBuilder.HideCategory(TEXT("Settings"));

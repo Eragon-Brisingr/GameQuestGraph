@@ -3,26 +3,30 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UObject/Object.h"
+#include "Engine/DeveloperSettings.h"
 #include "GameQuestGraphEditorSettings.generated.h"
 
-UCLASS(Config=Editor, defaultconfig)
-class GAMEQUESTGRAPHEDITOR_API UGameQuestGraphEditorSettings : public UObject
+UCLASS(Config=Editor, defaultconfig, CollapseCategories)
+class GAMEQUESTGRAPHEDITOR_API UGameQuestGraphEditorSettings : public UDeveloperSettings
 {
 	GENERATED_BODY()
 public:
 	UGameQuestGraphEditorSettings();
 
-	UPROPERTY(Config)
+	FName GetContainerName() const override { return TEXT("Project"); }
+	FName GetCategoryName() const override { return TEXT("Plugins"); }
+	FName GetSectionName() const override { return TEXT("GameQuestGraphSettings"); }
+
+	UPROPERTY(EditAnywhere, Config)
 	TSoftObjectPtr<UScriptStruct> SequenceSingleType;
-	UPROPERTY(Config)
+	UPROPERTY(EditAnywhere, Config)
 	TSoftObjectPtr<UScriptStruct> SequenceListType;
-	UPROPERTY(Config)
+	UPROPERTY(EditAnywhere, Config)
 	TSoftObjectPtr<UScriptStruct> SequenceBranchType;
-	UPROPERTY(Config)
+	UPROPERTY(EditAnywhere, Config)
 	TSoftObjectPtr<UScriptStruct> SequenceSubQuestType;
-	UPROPERTY(Config)
+	UPROPERTY(EditAnywhere, Config)
 	TSoftObjectPtr<UScriptStruct> ElementBranchListType;
-	UPROPERTY(Config)
+	UPROPERTY(EditAnywhere, Config)
 	TSoftObjectPtr<UScriptStruct> ElementScriptType;
 };

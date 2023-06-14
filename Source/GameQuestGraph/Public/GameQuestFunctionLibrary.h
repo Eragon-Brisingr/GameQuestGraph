@@ -19,11 +19,13 @@ public:
 	DECLARE_FUNCTION(execQuestSequenceToPtr);
 
 	UFUNCTION(BlueprintPure, CustomThunk, Category = "GameQuest|Utils", meta = (CustomStructureParam = Node, CompactNodeTitle = "->"))
-	static FGameQuestSequencePtr QuestElementToPtr(const FGameQuestSequenceBase& Node);
+	static FGameQuestElementPtr QuestElementToPtr(const FGameQuestElementBase& Node);
 	DECLARE_FUNCTION(execQuestElementToPtr);
 
 	UFUNCTION(BlueprintPure, Category = "GameQuest|Utils")
 	static bool IsQuestSequenceValid(const FGameQuestSequencePtr& Sequence) { return Sequence; }
+	UFUNCTION(BlueprintCallable, Category = "GameQuest|Utils")
+	static void EvaluateSequenceExposedInputs(const FGameQuestSequencePtr& Sequence) { 	if (Sequence) { Sequence->GetEvaluateGraphExposedInputs(); } }
 	UFUNCTION(BlueprintPure, Category = "GameQuest|Utils")
 	static FName GetQuestSequenceName(const FGameQuestSequencePtr& Sequence) { return Sequence ? Sequence->GetNodeName() : NAME_None; }
 	UFUNCTION(BlueprintPure, Category = "GameQuest|Utils")
@@ -31,6 +33,8 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "GameQuest|Utils")
 	static bool IsQuestElementValid(const FGameQuestElementPtr& Element) { return Element; }
+	UFUNCTION(BlueprintCallable, Category = "GameQuest|Utils")
+	static void EvaluateElementExposedInputs(const FGameQuestElementPtr& Element) { if (Element) { Element->GetEvaluateGraphExposedInputs(); } }
 	UFUNCTION(BlueprintPure, Category = "GameQuest|Utils")
 	static FName GetQuestElementName(const FGameQuestElementPtr& Element) { return Element ? Element->GetNodeName() : NAME_None; }
 	UFUNCTION(BlueprintPure, Category = "GameQuest|Utils")

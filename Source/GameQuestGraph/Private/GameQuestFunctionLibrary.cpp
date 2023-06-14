@@ -14,7 +14,7 @@ DEFINE_FUNCTION(UGameQuestFunctionLibrary::execQuestSequenceToPtr)
 
 	P_NATIVE_BEGIN;
 	const FStructProperty* StructProperty = CastField<FStructProperty>(MostRecentProperty);
-	if (ensure(StructProperty && StructProperty->Struct->IsChildOf(FGameQuestNodeBase::StaticStruct())))
+	if (ensure(StructProperty && StructProperty->Struct->IsChildOf(FGameQuestSequenceBase::StaticStruct())))
 	{
 		*(FGameQuestSequencePtr*)RESULT_PARAM = FGameQuestSequencePtr{ *static_cast<FGameQuestSequenceBase*>(SrcPropertyAddr) };
 	}
@@ -30,7 +30,7 @@ DEFINE_FUNCTION(UGameQuestFunctionLibrary::execQuestElementToPtr)
 
 	P_NATIVE_BEGIN;
 	const FStructProperty* StructProperty = CastField<FStructProperty>(MostRecentProperty);
-	if (ensure(StructProperty && StructProperty->Struct->IsChildOf(FGameQuestNodeBase::StaticStruct())))
+	if (ensure(StructProperty && StructProperty->Struct->IsChildOf(FGameQuestElementBase::StaticStruct())))
 	{
 		*(FGameQuestElementPtr*)RESULT_PARAM = FGameQuestElementPtr{ *static_cast<FGameQuestElementBase*>(SrcPropertyAddr) };
 	}

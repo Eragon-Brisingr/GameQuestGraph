@@ -29,6 +29,7 @@ public class GameQuestGraphEditor : ModuleRules
                 "ToolMenus",
                 "InputCore",
                 "PropertyEditor",
+                "DeveloperSettings",
 
                 "StructUtils",
                 "StructUtilsEditor",
