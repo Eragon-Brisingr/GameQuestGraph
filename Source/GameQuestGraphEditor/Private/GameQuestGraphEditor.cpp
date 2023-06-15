@@ -142,7 +142,11 @@ public:
 	TSharedRef<SWidget> CreateElementWidget(const UGameQuestGraphBase* Quest, uint16 ElementId, FGameQuestElementBase* Element, const FGameQuestNodeBase* OwnerNode) const override
 	{
 		const FString ElementName = Element->GetNodeName().ToString();
-		const FString ShortName = ElementName.Right(ElementName.Len() - OwnerNode->GetNodeName().GetStringLength() - 1);
+		FString ShortName = ElementName.Right(ElementName.Len() - OwnerNode->GetNodeName().GetStringLength() - 1);
+		if (Element->bIsOptional)
+		{
+			ShortName += TEXT(" [Optional]");
+		}
 
 		return SNew(SHorizontalBox)
 				+ SHorizontalBox::Slot()

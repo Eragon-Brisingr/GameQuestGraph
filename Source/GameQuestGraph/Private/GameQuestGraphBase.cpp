@@ -278,12 +278,22 @@ void UGameQuestGraphBase::PreSequenceActivated(FGameQuestSequenceBase* Sequence,
 {
 	OnPreSequenceActivatedNative.Broadcast(Sequence, SequenceId);
 	WhenPreSequenceActivated(Sequence, SequenceId);
+	UGameQuestGraphBase* MainQuest;
+	if (UGameQuestComponent* QuestComponent = GetComponent(MainQuest))
+	{
+		QuestComponent->WhenPreSequenceActivated(MainQuest, this, Sequence);
+	}
 }
 
 void UGameQuestGraphBase::PostSequenceDeactivated(FGameQuestSequenceBase* Sequence, uint16 SequenceId)
 {
 	OnPostSequenceDeactivatedNative.Broadcast(Sequence, SequenceId);
 	WhenPostSequenceDeactivated(Sequence, SequenceId);
+	UGameQuestGraphBase* MainQuest;
+	if (UGameQuestComponent* QuestComponent = GetComponent(MainQuest))
+	{
+		QuestComponent->WhenPostSequenceDeactivated(MainQuest, this, Sequence);
+	}
 }
 
 FGameQuestSequenceBase* UGameQuestGraphBase::GetSequencePtr(uint16 Id) const
@@ -355,9 +365,53 @@ void UGameQuestGraphBase::BindingRerouteTags()
 	}
 }
 
+UGameQuestComponent* UGameQuestGraphBase::GetComponent(UGameQuestGraphBase*& MainQuest) const
+{
+	MainQuest = const_cast<UGameQuestGraphBase*>(this);
+	do
+	{
+		if (UGameQuestComponent* QuestComponent = Cast<UGameQuestComponent>(MainQuest->Owner))
+		{
+			return QuestComponent;
+		}
+		MainQuest = Cast<UGameQuestGraphBase>(MainQuest->Owner);
+	}
+	while (MainQuest);
+	return nullptr;
+}
+
 AActor* UGameQuestGraphBase::GetOwnerActor() const
 {
 	return GetTypedOuter<AActor>();
+}
+
+TArray<FGameQuestSequencePtr> UGameQuestGraphBase::GetStartSequences() const
+{
+	TArray<FGameQuestSequencePtr> Res;
+	for (const uint16 SequenceId : StartSequences)
+	{
+		FGameQuestSequenceBase* Sequence = GetSequencePtr(SequenceId);
+		Res.Add(*Sequence);
+	}
+	return Res;
+}
+
+TArray<FGameQuestSequencePtr> UGameQuestGraphBase::GetActivatedSequences() const
+{
+	TArray<FGameQuestSequencePtr> Res;
+	for (const uint16 SequenceId : ActivatedSequences)
+	{
+		FGameQuestSequenceBase* Sequence = GetSequencePtr(SequenceId);
+		if (const FGameQuestSequenceSubQuest* SubQuest = GameQuestCast<FGameQuestSequenceSubQuest>(Sequence))
+		{
+			if (SubQuest->SubQuestInstance)
+			{
+				Res.Append(SubQuest->SubQuestInstance->GetActivatedSequences());
+			}
+		}
+		Res.Add(*Sequence);
+	}
+	return Res;
 }
 
 void UGameQuestGraphBase::InterruptQuest()
@@ -372,6 +426,24 @@ void UGameQuestGraphBase::InterruptQuest()
 		Sequence->DeactivateSequence(SequenceId);
 	}
 	InvokeInterruptQuest();
+}
+
+void UGameQuestGraphBase::InterruptSequence(const FGameQuestSequencePtr& Sequence)
+{
+	if (!ensure(Sequence))
+	{
+		return;
+	}
+	InterruptSequence(*Sequence.SequencePtr);
+}
+
+void UGameQuestGraphBase::InterruptBranch(const FGameQuestElementPtr& BranchElement)
+{
+	if (!ensure(BranchElement))
+	{
+		return;
+	}
+	InterruptBranch(*BranchElement.ElementPtr);
 }
 
 struct FInterruptNextActivateSequence

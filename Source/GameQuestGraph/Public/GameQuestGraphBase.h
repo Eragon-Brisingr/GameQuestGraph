@@ -86,7 +86,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "GameQuest")
 	UObject* GetOwner() const { return Owner; }
 	UFUNCTION(BlueprintCallable, Category = "GameQuest")
+	UGameQuestComponent* GetComponent(UGameQuestGraphBase*& MainQuest) const;
+	UFUNCTION(BlueprintCallable, Category = "GameQuest")
 	AActor* GetOwnerActor() const;
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameQuest")
+	TArray<FGameQuestSequencePtr> GetStartSequences() const;
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "GameQuest")
+	TArray<FGameQuestSequencePtr> GetActivatedSequences() const;
+
 	FGameQuestSequenceSubQuest* GetOwnerNode() const { return OwnerNode; }
 	const TArray<uint16>& GetStartSequencesIds() const { return StartSequences; }
 	const TArray<uint16>& GetActivatedSequenceIds() const { return ActivatedSequences; }
@@ -94,11 +101,16 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "GameQuest")
 	void DefaultEntry();
 
-	UFUNCTION(BlueprintCallable, Category = "GameQuest")
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameQuest")
 	void InterruptQuest();
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameQuest")
+	void InterruptSequence(const FGameQuestSequencePtr& Sequence);
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameQuest")
+	void InterruptBranch(const FGameQuestElementPtr& BranchElement);
+
 	void InterruptSequence(FGameQuestSequenceBase& Sequence);
 	void InterruptBranch(FGameQuestElementBase& Element);
-	UFUNCTION(BlueprintCallable, CustomThunk, Category = "GameQuest", meta = (CustomStructureParam = Node))
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, CustomThunk, Category = "GameQuest", meta = (CustomStructureParam = Node))
 	void InterruptNodeByRef(UPARAM(Ref) FGameQuestNodeBase& Node);
 	DECLARE_FUNCTION(execInterruptNodeByRef);
 

@@ -22,6 +22,8 @@ public:
 	static FGameQuestElementPtr QuestElementToPtr(const FGameQuestElementBase& Node);
 	DECLARE_FUNCTION(execQuestElementToPtr);
 
+	UFUNCTION(BlueprintPure, Category = "GameQuest|Utils", meta=(DisplayName = "Equal (QuestSequence)", CompactNodeTitle = "==", Keywords = "== equal"))
+	static bool EqualEqual_QuestSequenceQuestSequence(const FGameQuestSequencePtr& LHS, const FGameQuestSequencePtr& RHS) { return LHS == RHS; }
 	UFUNCTION(BlueprintPure, Category = "GameQuest|Utils")
 	static bool IsQuestSequenceValid(const FGameQuestSequencePtr& Sequence) { return Sequence; }
 	UFUNCTION(BlueprintCallable, Category = "GameQuest|Utils")
@@ -30,7 +32,27 @@ public:
 	static FName GetQuestSequenceName(const FGameQuestSequencePtr& Sequence) { return Sequence ? Sequence->GetNodeName() : NAME_None; }
 	UFUNCTION(BlueprintPure, Category = "GameQuest|Utils")
 	static int32 GetQuestSequenceId(const FGameQuestSequencePtr& Sequence) { return Sequence ? Sequence->OwnerQuest->GetSequenceId(*Sequence) : GameQuest::IdNone; }
+	UFUNCTION(BlueprintPure, Category = "GameQuest|Utils")
+	static bool IsBranchesActivate(const FGameQuestSequencePtr& Sequence);
+	UFUNCTION(BlueprintCallable, Category = "GameQuest|Utils")
+	static TArray<FGameQuestElementPtr> GetQuestSequenceListElements(const FGameQuestSequencePtr& Sequence, TArray<EGameQuestSequenceLogic>& Logics);
+	UFUNCTION(BlueprintCallable, Category = "GameQuest|Utils")
+	static TArray<FGameQuestElementPtr> GetQuestSequenceBranchElements(const FGameQuestSequencePtr& Sequence);
+	UFUNCTION(BlueprintCallable, Category = "GameQuest|Utils")
+	static TArray<FGameQuestSequencePtr> GetQuestSequenceNextSequence(const FGameQuestSequencePtr& Sequence);
+	UFUNCTION(BlueprintCallable, Category = "GameQuest|Utils")
+	static TArray<FGameQuestSequencePtr> GetQuestSequenceBranchNextSequence(const FGameQuestSequencePtr& Sequence, int32 BranchIndex);
+	UFUNCTION(BlueprintPure, Category = "GameQuest|Utils")
+	static bool IsQuestSequenceSingle(const FGameQuestSequencePtr& Sequence) { return Sequence ? GameQuestCast<FGameQuestSequenceSingle>(Sequence.SequencePtr) != nullptr : false; }
+	UFUNCTION(BlueprintPure, Category = "GameQuest|Utils")
+	static bool IsQuestSequenceList(const FGameQuestSequencePtr& Sequence) { return Sequence ? GameQuestCast<FGameQuestSequenceList>(Sequence.SequencePtr) != nullptr : false; }
+	UFUNCTION(BlueprintPure, Category = "GameQuest|Utils")
+	static bool IsQuestSequenceBranch(const FGameQuestSequencePtr& Sequence) { return Sequence ? GameQuestCast<FGameQuestSequenceBranch>(Sequence.SequencePtr) != nullptr : false; }
+	UFUNCTION(BlueprintPure, Category = "GameQuest|Utils")
+	static bool IsQuestSequenceSubQuest(const FGameQuestSequencePtr& Sequence) { return Sequence ? GameQuestCast<FGameQuestSequenceSubQuest>(Sequence.SequencePtr) != nullptr : false; }
 
+	UFUNCTION(BlueprintPure, Category = "GameQuest|Utils", meta=(DisplayName = "Equal (QuestElement)", CompactNodeTitle = "==", Keywords = "== equal"))
+	static bool EqualEqual_QuestElementQuestElement(const FGameQuestElementPtr& LHS, const FGameQuestElementPtr& RHS) { return LHS == RHS; }
 	UFUNCTION(BlueprintPure, Category = "GameQuest|Utils")
 	static bool IsQuestElementValid(const FGameQuestElementPtr& Element) { return Element; }
 	UFUNCTION(BlueprintCallable, Category = "GameQuest|Utils")
@@ -45,6 +67,10 @@ public:
 	static bool IsQuestElementActivated(const FGameQuestElementPtr& Element) { return Element ? Element->bIsActivated : false; }
 	UFUNCTION(BlueprintPure, Category = "GameQuest|Utils")
 	static bool IsQuestElementOptional(const FGameQuestElementPtr& Element) { return Element ? Element->bIsOptional : false; }
+	UFUNCTION(BlueprintPure, Category = "GameQuest|Utils")
+	static bool IsQuestElementBranchList(const FGameQuestElementPtr& Element) { return Element ? GameQuestCast<FGameQuestElementBranchList>(Element.ElementPtr) != nullptr : false; }
+	UFUNCTION(BlueprintCallable, Category = "GameQuest|Utils")
+	static TArray<FGameQuestElementPtr> GetQuestElementBranchListElements(const FGameQuestElementPtr& Element, TArray<EGameQuestSequenceLogic>& Logics);
 	UFUNCTION(BlueprintPure, Category = "GameQuest|Utils")
 	static UGameQuestElementScriptable* GetQuestElementScriptInstance(const FGameQuestElementPtr& Element);
 };

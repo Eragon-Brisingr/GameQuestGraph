@@ -67,6 +67,9 @@ public:
 	// Must Implement GameQuestTreeListElement Interface
 	UPROPERTY(EditAnywhere, meta = (MustImplement = "/Script/GameQuestGraph.GameQuestTreeListElement"))
 	TSubclassOf<UUserWidget> ElementWidget;
+	// Must Implement GameQuestTreeListElementList Interface
+	UPROPERTY(EditAnywhere, meta = (MustImplement = "/Script/GameQuestGraph.GameQuestTreeListElementList"))
+	TSubclassOf<UUserWidget> ElementListWidget;
 	// Must Implement GameQuestTreeListSequence Interface
 	UPROPERTY(EditAnywhere, meta = (MustImplement = "/Script/GameQuestGraph.GameQuestTreeListSequence"))
 	TSubclassOf<UUserWidget> SequenceHeader;
@@ -76,6 +79,9 @@ public:
 	// Must Implement GameQuestTreeListRerouteTag Interface
 	UPROPERTY(EditAnywhere, meta = (MustImplement = "/Script/GameQuestGraph.GameQuestTreeListRerouteTag"))
 	TSubclassOf<UUserWidget> RerouteTagWidget;
+
+	UFUNCTION(BlueprintCallable, Category = "Quest")
+	UWidget* CreateElementWidget(const FGameQuestElementPtr& Element);
 
 	class SGameQuestTreeListUMG;
 	class SGameQuestTreeListSubUMG;
@@ -99,7 +105,20 @@ class GAMEQUESTGRAPH_API IGameQuestTreeListElement
 	GENERATED_BODY()
 public:
 	UFUNCTION(BlueprintNativeEvent, Category = GameQuest)
-	void WhenSetElement(const UGameQuestGraphBase* Quest, const FGameQuestElementPtr& Element);
+	void WhenSetElement(UGameQuestTreeList* TreeList, const UGameQuestGraphBase* Quest, const FGameQuestElementPtr& Element);
+};
+
+UINTERFACE(MinimalAPI)
+class UGameQuestTreeListElementList : public UInterface
+{
+	GENERATED_BODY()
+};
+class GAMEQUESTGRAPH_API IGameQuestTreeListElementList
+{
+	GENERATED_BODY()
+public:
+	UFUNCTION(BlueprintNativeEvent, Category = GameQuest)
+	void WhenSetElements(UGameQuestTreeList* TreeList, const UGameQuestGraphBase* Quest, const TArray<FGameQuestElementPtr>& Elements, const TArray<EGameQuestSequenceLogic>& ElementLogics);
 };
 
 UINTERFACE(MinimalAPI)
@@ -112,7 +131,7 @@ class GAMEQUESTGRAPH_API IGameQuestTreeListSequence
 	GENERATED_BODY()
 public:
 	UFUNCTION(BlueprintNativeEvent, Category = GameQuest)
-	void WhenSetSequence(const UGameQuestGraphBase* Quest, const FGameQuestSequencePtr& Sequence);
+	void WhenSetSequence(UGameQuestTreeList* TreeList, const UGameQuestGraphBase* Quest, const FGameQuestSequencePtr& Sequence);
 };
 
 UINTERFACE(MinimalAPI)
@@ -125,7 +144,7 @@ class GAMEQUESTGRAPH_API IGameQuestTreeListSubQuest
 	GENERATED_BODY()
 public:
 	UFUNCTION(BlueprintNativeEvent, Category = GameQuest)
-	void WhenSetSubQuest(const UGameQuestGraphBase* Quest, const FGameQuestSequencePtr& Sequence, const UGameQuestGraphBase* SubQuest);
+	void WhenSetSubQuest(UGameQuestTreeList* TreeList, const UGameQuestGraphBase* Quest, const FGameQuestSequencePtr& Sequence, const UGameQuestGraphBase* SubQuest);
 };
 
 UINTERFACE(MinimalAPI)
@@ -138,5 +157,5 @@ class GAMEQUESTGRAPH_API IGameQuestTreeListRerouteTag
 	GENERATED_BODY()
 public:
 	UFUNCTION(BlueprintNativeEvent, Category = GameQuest)
-	void WhenSetRerouteTag(const UGameQuestGraphBase* Quest, const FName& RerouteTagName);
+	void WhenSetRerouteTag(UGameQuestTreeList* TreeList, const UGameQuestGraphBase* Quest, const FName& RerouteTagName);
 };

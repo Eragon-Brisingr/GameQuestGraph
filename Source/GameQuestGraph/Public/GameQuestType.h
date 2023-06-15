@@ -11,7 +11,7 @@ GAMEQUESTGRAPH_API DECLARE_LOG_CATEGORY_EXTERN(LogGameQuest, Log, All);
 class UGameQuestGraphBase;
 
 UENUM()
-enum class EGameQuestSequenceLogic
+enum class EGameQuestSequenceLogic : uint8
 {
 	And,
 	Or,
@@ -72,6 +72,8 @@ public:
 	FGameQuestSequenceBase* SequencePtr = nullptr;
 
 	operator bool() const { return Owner.IsValid(); }
+	friend bool operator==(const FGameQuestSequencePtr& LHS, const FGameQuestSequencePtr& RHS) { return LHS.SequencePtr == RHS.SequencePtr; }
+	friend uint32 GetTypeHash(const FGameQuestSequencePtr& Ptr) { return GetTypeHash(Ptr.SequencePtr); }
 	FGameQuestSequenceBase* operator->() const { return SequencePtr; }
 	FGameQuestSequenceBase* operator*() const { return SequencePtr; }
 };
@@ -90,6 +92,8 @@ public:
 	FGameQuestElementBase* ElementPtr = nullptr;
 
 	operator bool() const { return Owner.IsValid(); }
+	friend bool operator==(const FGameQuestElementPtr& LHS, const FGameQuestElementPtr& RHS) { return LHS.ElementPtr == RHS.ElementPtr; }
+	friend uint32 GetTypeHash(const FGameQuestElementPtr& Ptr) { return GetTypeHash(Ptr.ElementPtr); }
 	FGameQuestElementBase* operator->() const { return ElementPtr; }
 	FGameQuestElementBase* operator*() const { return ElementPtr; }
 };

@@ -7,6 +7,7 @@
 #include "GameQuestGraphBase.h"
 #include "GameQuestSequenceBase.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/TextBlock.h"
 #include "Slate/SObjectWidget.h"
 #include "Widgets/Layout/SExpandableArea.h"
 #include "Widgets/Layout/SSeparator.h"
@@ -44,25 +45,29 @@ namespace GameQuest
 		TArray<FManagedSequence> ManagedSequences;
 		TArray<FRerouteTagNode> RerouteTagNodes;
 
-		TSharedRef<SWidget> Construct(SGameQuestTreeListBase* TreeList,  const UGameQuestGraphBase* Quest, const TArray<uint16>& Sequences)
+		TSharedRef<SWidget> Construct(SGameQuestTreeListBase* TreeList, const UGameQuestGraphBase* Quest, const TOptional<uint16>& CurSequenceId, const TArray<uint16>& NextSequenceIds)
 		{
 			SequenceList = SNew(SVerticalBox);
-			AddNextSequences(TreeList, Quest, Sequences);
+			AddNextSequences(TreeList, Quest, CurSequenceId, NextSequenceIds);
 			return SequenceList.ToSharedRef();
 		}
-		void AddNextSequences(SGameQuestTreeListBase* TreeList, const UGameQuestGraphBase* Quest, const TArray<uint16>& SequenceIds)
+		void AddNextSequences(SGameQuestTreeListBase* TreeList, const UGameQuestGraphBase* Quest, const TOptional<uint16>& CurSequenceId, const TArray<uint16>& NextSequenceIds)
 		{
-			if (SequenceIds.Num() == 0)
+			if (NextSequenceIds.Num() == 0)
 			{
 				return;
 			}
-			for (const uint16 SequenceId : SequenceIds)
+			for (const uint16 SequenceId : NextSequenceIds)
 			{
 				if (ManagedSequences.ContainsByPredicate([SequenceId](const FManagedSequence& E){ return E.Id == SequenceId; }))
 				{
 					continue;
 				}
 				FGameQuestSequenceBase* Sequence = Quest->GetSequencePtr(SequenceId);
+				if (CurSequenceId && Sequence->PreSequence != *CurSequenceId)
+				{
+					continue;
+				}
 				const TSharedRef<SWidget> Header = TreeList->CreateSequenceHeader(Quest, SequenceId, Sequence);
 				const TSharedRef<SWidget> Content = TreeList->CreateSequenceContent(Quest, SequenceId, Sequence);
 				ManagedSequences.Add({ SequenceId, Sequence, Header, Content });
@@ -209,7 +214,7 @@ namespace GameQuest
 		FGameQuestSequenceSingle* SequenceSingle;
 		FNextSequenceListNode NextSequenceListNode;
 
-		TSharedRef<SWidget> Construct(SGameQuestTreeListBase* TreeList, const UGameQuestGraphBase* Quest, FGameQuestSequenceSingle* InSequenceSingle)
+		TSharedRef<SWidget> Construct(SGameQuestTreeListBase* TreeList, const UGameQuestGraphBase* Quest, uint16 SequenceId, FGameQuestSequenceSingle* InSequenceSingle)
 		{
 			SequenceSingle = InSequenceSingle;
 
@@ -224,13 +229,13 @@ namespace GameQuest
 				+ SVerticalBox::Slot()
 				.AutoHeight()
 				[
-					NextSequenceListNode.Construct(TreeList, Quest, SequenceSingle->NextSequences)
+					NextSequenceListNode.Construct(TreeList, Quest, SequenceId, SequenceSingle->NextSequences)
 				];
 		}
 
 		void BuildNextSequences(SGameQuestTreeListBase* TreeList, const UGameQuestGraphBase* Quest) override
 		{
-			NextSequenceListNode.AddNextSequences(TreeList, Quest, SequenceSingle->NextSequences);
+			NextSequenceListNode.AddNextSequences(TreeList, Quest, Quest->GetSequenceId(SequenceSingle), SequenceSingle->NextSequences);
 		}
 		void ShowRerouteTagSequences(const FGameQuestSequenceSubQuestRerouteTag& RerouteTag, SGameQuestTreeListBase* OwnerTreeList, const FRerouteTagNode& RerouteTagNode) override
 		{
@@ -248,7 +253,7 @@ namespace GameQuest
 		FGameQuestSequenceList* SequenceList;
 		FNextSequenceListNode NextSequenceListNode;
 
-		TSharedRef<SWidget> Construct(SGameQuestTreeListBase* TreeList, const UGameQuestGraphBase* Quest, FGameQuestSequenceList* InSequenceList)
+		TSharedRef<SWidget> Construct(SGameQuestTreeListBase* TreeList, const UGameQuestGraphBase* Quest, uint16 SequenceId, FGameQuestSequenceList* InSequenceList)
 		{
 			SequenceList = InSequenceList;
 			return SNew(SVerticalBox)
@@ -261,13 +266,13 @@ namespace GameQuest
 				+ SVerticalBox::Slot()
 				.AutoHeight()
 				[
-					NextSequenceListNode.Construct(TreeList, Quest, SequenceList->NextSequences)
+					NextSequenceListNode.Construct(TreeList, Quest, SequenceId, SequenceList->NextSequences)
 				];
 		}
 
 		void BuildNextSequences(SGameQuestTreeListBase* TreeList, const UGameQuestGraphBase* Quest) override
 		{
-			NextSequenceListNode.AddNextSequences(TreeList, Quest, SequenceList->NextSequences);
+			NextSequenceListNode.AddNextSequences(TreeList, Quest, Quest->GetSequenceId(SequenceList), SequenceList->NextSequences);
 		}
 		void ShowRerouteTagSequences(const FGameQuestSequenceSubQuestRerouteTag& RerouteTag, SGameQuestTreeListBase* OwnerTreeList, const FRerouteTagNode& RerouteTagNode) override
 		{
@@ -293,7 +298,7 @@ namespace GameQuest
 				uint8 bBuilt : 1;
 			};
 			TArray<FBranchWidget> BranchWidgets;
-			TSharedRef<SWidget> Construct(SGameQuestTreeListBase* TreeList, const UGameQuestGraphBase* Quest, FGameQuestSequenceBranch* InSequenceBranch)
+			TSharedRef<SWidget> Construct(SGameQuestTreeListBase* TreeList, const UGameQuestGraphBase* Quest, uint16 SequenceId, FGameQuestSequenceBranch* InSequenceBranch)
 			{
 				const TArray<FGameQuestSequenceBranchElement>& Branches = InSequenceBranch->Branches;
 				BranchWidgets.SetNum(Branches.Num());
@@ -323,7 +328,7 @@ namespace GameQuest
 						[
 							TreeList->ApplyBranchElementWrapper(Quest, InSequenceBranch, Idx, Branch.Element, Element, CreateElementWidget(Branch.Element, Element))
 						];
-					TSharedRef<SWidget> NextSequenceList = BranchVisualData.NextSequenceListNode.Construct(TreeList, Quest, Branch.NextSequences);
+					TSharedRef<SWidget> NextSequenceList = BranchVisualData.NextSequenceListNode.Construct(TreeList, Quest, SequenceId, Branch.NextSequences);
 					NextSequenceList->SetVisibility(BranchVisualData.bBuilt ? EVisibility::SelfHitTestInvisible : EVisibility::Collapsed);
 					BranchList->AddSlot()
 						.AutoHeight()
@@ -337,7 +342,7 @@ namespace GameQuest
 		};
 
 		FBranchElementNode BranchElement;
-		TSharedRef<SWidget> Construct(SGameQuestTreeListBase* TreeList, const UGameQuestGraphBase* Quest, FGameQuestSequenceBranch* InSequenceBranch)
+		TSharedRef<SWidget> Construct(SGameQuestTreeListBase* TreeList, const UGameQuestGraphBase* Quest, uint16 SequenceId, FGameQuestSequenceBranch* InSequenceBranch)
 		{
 			SequenceBranch = InSequenceBranch;
 
@@ -351,12 +356,13 @@ namespace GameQuest
 				+ SVerticalBox::Slot()
 				.AutoHeight()
 				[
-					BranchElement.Construct(TreeList, Quest, InSequenceBranch)
+					BranchElement.Construct(TreeList, Quest, SequenceId, InSequenceBranch)
 				];
 		}
 
 		void BuildNextSequences(SGameQuestTreeListBase* TreeList, const UGameQuestGraphBase* Quest) override
 		{
+			const uint16 SequenceId = Quest->GetSequenceId(SequenceBranch);
 			for (int32 Idx = 0; Idx < SequenceBranch->Branches.Num(); ++Idx)
 			{
 				const FGameQuestSequenceBranchElement& Branch = SequenceBranch->Branches[Idx];
@@ -364,7 +370,7 @@ namespace GameQuest
 				if (BranchVisualData.bBuilt == false && Branch.NextSequences.Num() > 0)
 				{
 					BranchVisualData.bBuilt = true;
-					BranchVisualData.NextSequenceListNode.AddNextSequences(TreeList, Quest, Branch.NextSequences);
+					BranchVisualData.NextSequenceListNode.AddNextSequences(TreeList, Quest, SequenceId, Branch.NextSequences);
 					BranchVisualData.NextSequenceListNode.SequenceList->SetVisibility(EVisibility::SelfHitTestInvisible);
 				}
 			}
@@ -409,11 +415,11 @@ namespace GameQuest
 		FTSTicker::FDelegateHandle TickerHandle;
 		TMap<FName, FRerouteTagNode> RerouteTagMap;
 
-		TSharedRef<SWidget> Construct(SGameQuestTreeListBase* TreeList, const UGameQuestGraphBase* Quest, FGameQuestSequenceSubQuest* InSequenceSubQuest)
+		TSharedRef<SWidget> Construct(SGameQuestTreeListBase* TreeList, const UGameQuestGraphBase* Quest, uint16 SequenceId, FGameQuestSequenceSubQuest* InSequenceSubQuest)
 		{
 			SequenceSubQuest = InSequenceSubQuest;
 			ContentBox = SNew(SVerticalBox);
-			auto CreateSubQuestTree = [this, TreeList, Quest]
+			auto CreateSubQuestTree = [this, TreeList, Quest, SequenceId]
 			{
 				const FMargin HeaderPadding{ 1.f, TreeNodePadding.Top, TreeNodePadding.Right, TreeNodePadding.Bottom };
 				SubTreeList = TreeList->CreateSubTreeList(SequenceSubQuest->SubQuestInstance);
@@ -460,7 +466,7 @@ namespace GameQuest
 				ContentBox->AddSlot()
 				.AutoHeight()
 				[
-					NextSequenceListNode.Construct(TreeList, Quest, {})
+					NextSequenceListNode.Construct(TreeList, Quest, SequenceId, {})
 				];
 				BuildNextSequences(TreeList, Quest);
 			};
@@ -540,15 +546,15 @@ namespace GameQuest
 		FGameQuestSequenceBase* Sequence;
 		FNextSequenceListNode NextSequenceListNode;
 
-		TSharedRef<SWidget> Construct(SGameQuestTreeListBase* TreeList, const UGameQuestGraphBase* Quest, FGameQuestSequenceBase* InSequence)
+		TSharedRef<SWidget> Construct(SGameQuestTreeListBase* TreeList, const UGameQuestGraphBase* Quest, uint16 SequenceId, FGameQuestSequenceBase* InSequence)
 		{
 			Sequence = InSequence;
-			return NextSequenceListNode.Construct(TreeList, Quest, Sequence->GetNextSequences());
+			return NextSequenceListNode.Construct(TreeList, Quest, SequenceId, Sequence->GetNextSequences());
 		}
 
 		void BuildNextSequences(SGameQuestTreeListBase* TreeList, const UGameQuestGraphBase* Quest) override
 		{
-			NextSequenceListNode.AddNextSequences(TreeList, Quest, Sequence->GetNextSequences());
+			NextSequenceListNode.AddNextSequences(TreeList, Quest, Quest->GetSequenceId(Sequence), Sequence->GetNextSequences());
 		}
 		void ShowRerouteTagSequences(const FGameQuestSequenceSubQuestRerouteTag& RerouteTag, SGameQuestTreeListBase* OwnerTreeList, const FRerouteTagNode& RerouteTagNode) override
 		{
@@ -566,31 +572,31 @@ namespace GameQuest
 		{
 			const TSharedRef<FSequenceSingleNode> SingleNode = MakeShared<FSequenceSingleNode>();
 			TreeList->SequenceWidgetMap.Add(SequenceId, SingleNode);
-			return SingleNode->Construct(TreeList, Quest, Single);
+			return SingleNode->Construct(TreeList, Quest, SequenceId, Single);
 		}
 		else if (FGameQuestSequenceList* List = GameQuestCast<FGameQuestSequenceList>(Sequence))
 		{
 			const TSharedRef<FSequenceListNode> ListNode = MakeShared<FSequenceListNode>();
 			TreeList->SequenceWidgetMap.Add(SequenceId, ListNode);
-			return ListNode->Construct(TreeList, Quest, List);
+			return ListNode->Construct(TreeList, Quest, SequenceId, List);
 		}
 		else if (FGameQuestSequenceBranch* Branch = GameQuestCast<FGameQuestSequenceBranch>(Sequence))
 		{
 			const TSharedRef<FSequenceBranchNode> BranchNode = MakeShared<FSequenceBranchNode>();
 			TreeList->SequenceWidgetMap.Add(SequenceId, BranchNode);
-			return BranchNode->Construct(TreeList, Quest, Branch);
+			return BranchNode->Construct(TreeList, Quest, SequenceId, Branch);
 		}
 		else if (FGameQuestSequenceSubQuest* SubQuest = GameQuestCast<FGameQuestSequenceSubQuest>(Sequence))
 		{
 			const TSharedRef<FSequenceSubQuestNode> SubQuestNode = MakeShared<FSequenceSubQuestNode>();
 			TreeList->SequenceWidgetMap.Add(SequenceId, SubQuestNode);
-			return SubQuestNode->Construct(TreeList, Quest, SubQuest);
+			return SubQuestNode->Construct(TreeList, Quest, SequenceId, SubQuest);
 		}
 		else
 		{
 			const TSharedRef<FSequenceGenericNode> GenericNode = MakeShared<FSequenceGenericNode>();
 			TreeList->SequenceWidgetMap.Add(SequenceId, GenericNode);
-			return GenericNode->Construct(TreeList, Quest, SubQuest);
+			return GenericNode->Construct(TreeList, Quest, SequenceId, SubQuest);
 		}
 	}
 }
@@ -625,7 +631,7 @@ void SGameQuestTreeListBase::SetQuest(UGameQuestGraphBase* InGameQuest)
 		OnPostSequenceDeactivatedHandle = Quest->OnPostSequenceDeactivatedNative.AddSP(this, &SGameQuestTreeListBase::WhenSequenceDeactivated);
 		SequenceList->AddSlot()
 		[
-			GameQuest::FNextSequenceListNode{}.Construct(this, Quest, Quest->GetStartSequencesIds())
+			GameQuest::FNextSequenceListNode{}.Construct(this, Quest, {}, Quest->GetStartSequencesIds())
 		];
 	}
 }
@@ -658,7 +664,7 @@ void SGameQuestTreeListBase::WhenSequenceActivated(FGameQuestSequenceBase* Seque
 		.AutoHeight()
 		.Padding(FMargin{ 0.f, 0.f, 0.f, 0.f })
 		[
-			GameQuest::FNextSequenceListNode{}.Construct(this, Quest, Quest->GetStartSequencesIds())
+			GameQuest::FNextSequenceListNode{}.Construct(this, Quest, {}, Quest->GetStartSequencesIds())
 		];
 		return;
 	}
@@ -707,14 +713,35 @@ public:
 	{
 		if (Owner->ElementWidget == nullptr || !ensure(Owner->ElementWidget->ImplementsInterface(UGameQuestTreeListElement::StaticClass())))
 		{
-			return SNew(STextBlock).Text(FText::FromName(Element->GetNodeName()));
+			if (Element->bIsOptional)
+			{
+				return SNew(STextBlock).Text(FText::FromName(Element->GetNodeName()));
+			}
+			else
+			{
+				return SNew(STextBlock).Text(FText::FromString(Element->GetNodeName().ToString() + TEXT(" [Optional]")));
+			}
 		}
 		UUserWidget* UserWidget = CreateWidget<UUserWidget>(Owner, Owner->ElementWidget);
-		IGameQuestTreeListElement::Execute_WhenSetElement(UserWidget, Quest, *Element);
+		IGameQuestTreeListElement::Execute_WhenSetElement(UserWidget, Owner, Quest, *Element);
 		return UserWidget->TakeWidget();
 	}
 	TSharedRef<SWidget> CreateElementList(const UGameQuestGraphBase* Quest, const TArray<uint16>& ElementIds, const GameQuest::FLogicList& ElementLogics, const FGameQuestNodeBase* OwnerNode) const override
 	{
+		if (Owner->ElementListWidget && ensure(Owner->ElementListWidget->ImplementsInterface(UGameQuestTreeListElementList::StaticClass())))
+		{
+			TArray<FGameQuestElementPtr> Elements;
+			Elements.Reserve(ElementIds.Num());
+			for (const uint16 ElementId : ElementIds)
+			{
+				FGameQuestElementBase* Element = Quest->GetElementPtr(ElementId);
+				Elements.Add(*Element);
+			}
+			UUserWidget* UserWidget = CreateWidget<UUserWidget>(Owner, Owner->ElementListWidget);
+			IGameQuestTreeListElementList::Execute_WhenSetElements(UserWidget, Owner, Quest, Elements, TArray<EGameQuestSequenceLogic>{ ElementLogics });
+			return UserWidget->TakeWidget();
+		}
+
 		static FTextBlockStyle LogicHintTextStyle{ FCoreStyle::Get().GetWidgetStyle<FTextBlockStyle>(TEXT("NormalText")) };
 		LogicHintTextStyle.Font.OutlineSettings.OutlineSize = 1;
 
@@ -771,7 +798,7 @@ public:
 			return SNew(STextBlock).Text(FText::FromName(Sequence->GetNodeName()));
 		}
 		UUserWidget* UserWidget = CreateWidget<UUserWidget>(Owner, Owner->SequenceHeader);
-		IGameQuestTreeListSequence::Execute_WhenSetSequence(UserWidget, Quest, *Sequence);
+		IGameQuestTreeListSequence::Execute_WhenSetSequence(UserWidget, Owner, Quest, *Sequence);
 		return UserWidget->TakeWidget();
 	}
 	TSharedRef<SWidget> CreateSubQuestHeader(const UGameQuestGraphBase* Quest, FGameQuestSequenceSubQuest* SequenceSubQuest) const override
@@ -781,7 +808,7 @@ public:
 			return SNew(STextBlock).Text(FText::FromName(SequenceSubQuest->GetNodeName()));
 		}
 		UUserWidget* UserWidget = CreateWidget<UUserWidget>(Owner, Owner->SubQuestHeader);
-		IGameQuestTreeListSubQuest::Execute_WhenSetSubQuest(UserWidget, Quest, *SequenceSubQuest, SequenceSubQuest->SubQuestInstance);
+		IGameQuestTreeListSubQuest::Execute_WhenSetSubQuest(UserWidget, Owner, Quest, *SequenceSubQuest, SequenceSubQuest->SubQuestInstance);
 		return UserWidget->TakeWidget();
 	}
 	TSharedRef<SWidget> CreateRerouteTagWidget(const UGameQuestGraphBase* Quest, FGameQuestSequenceSubQuest* SequenceSubQuest, const FGameQuestSequenceSubQuestRerouteTag& RerouteTag) const override
@@ -791,7 +818,7 @@ public:
 			return SNew(STextBlock).Text(FText::FromName(RerouteTag.TagName));
 		}
 		UUserWidget* UserWidget = CreateWidget<UUserWidget>(Owner, Owner->RerouteTagWidget);
-		IGameQuestTreeListRerouteTag::Execute_WhenSetRerouteTag(UserWidget, Quest, RerouteTag.TagName);
+		IGameQuestTreeListRerouteTag::Execute_WhenSetRerouteTag(UserWidget, Owner, Quest, RerouteTag.TagName);
 		return UserWidget->TakeWidget();
 	}
 };
@@ -830,6 +857,23 @@ void UGameQuestTreeList::SetQuest(UGameQuestGraphBase* NewQuest)
 	{
 		MainQuestTree->SetQuest(Quest);
 	}
+}
+
+UWidget* UGameQuestTreeList::CreateElementWidget(const FGameQuestElementPtr& Element)
+{
+	if (!Element)
+	{
+		return nullptr;
+	}
+	if (ElementWidget == nullptr || !ensure(ElementWidget->ImplementsInterface(UGameQuestTreeListElement::StaticClass())))
+	{
+		UTextBlock* Widget = NewObject<UTextBlock>(this);
+		Widget->SetText(FText::FromName(Element->GetNodeName()));
+		return Widget;
+	}
+	UUserWidget* Widget = CreateWidget<UUserWidget>(this, this->ElementWidget);
+	IGameQuestTreeListElement::Execute_WhenSetElement(Widget, this, Quest, Element);
+	return Widget;
 }
 
 TSharedRef<SWidget> UGameQuestTreeList::RebuildWidget()

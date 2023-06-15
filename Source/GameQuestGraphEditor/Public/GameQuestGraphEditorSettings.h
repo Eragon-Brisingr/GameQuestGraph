@@ -15,7 +15,7 @@ public:
 
 	FName GetContainerName() const override { return TEXT("Project"); }
 	FName GetCategoryName() const override { return TEXT("Plugins"); }
-	FName GetSectionName() const override { return TEXT("GameQuestGraphSettings"); }
+	FName GetSectionName() const override { return TEXT("GameQuestGraphEditorSettings"); }
 
 	UPROPERTY(EditAnywhere, Config)
 	TSoftObjectPtr<UScriptStruct> SequenceSingleType;
@@ -29,4 +29,9 @@ public:
 	TSoftObjectPtr<UScriptStruct> ElementBranchListType;
 	UPROPERTY(EditAnywhere, Config)
 	TSoftObjectPtr<UScriptStruct> ElementScriptType;
+
+	UPROPERTY(EditAnywhere, Config)
+	TArray<TSoftObjectPtr<UScriptStruct>> HiddenNativeTypes;
+	UPROPERTY(EditAnywhere, Config)
+	TArray<TSoftClassPtr<UObject>> HiddenScriptTypes;
 };

@@ -14,6 +14,7 @@
 #include "GameQuestGraphBase.h"
 #include "GameQuestGraphBlueprint.h"
 #include "GameQuestGraphCompilerContext.h"
+#include "GameQuestGraphEditorSettings.h"
 #include "GameQuestNodeBase.h"
 #include "GameQuestGraphEditorStyle.h"
 #include "GameQuestType.h"
@@ -68,6 +69,7 @@ FGameQuestStructCollector::FGameQuestStructCollector()
 			HasCustomNodeStructs.Add(NodeStruct);
 		}
 	}
+	const UGameQuestGraphEditorSettings* EditorSettings = GetDefault<UGameQuestGraphEditorSettings>();
 	for (TObjectIterator<UScriptStruct> It{ RF_ClassDefaultObject, false }; It; ++It)
 	{
 		UScriptStruct* Struct = *It;
@@ -85,6 +87,10 @@ FGameQuestStructCollector::FGameQuestStructCollector()
 		}
 		static FName MD_Hidden = TEXT("Hidden");
 		if (Struct->HasMetaData(MD_Hidden))
+		{
+			continue;
+		}
+		if (EditorSettings->HiddenNativeTypes.Contains(Struct))
 		{
 			continue;
 		}
@@ -197,6 +203,7 @@ void FGameQuestClassCollector::ForEachDerivedClasses(const TSubclassOf<UGameQues
 	GetDerivedClasses(BaseClass, DerivedClasses);
 	DerivedClasses.Add(BaseClass);
 
+	const UGameQuestGraphEditorSettings* EditorSettings = GetDefault<UGameQuestGraphEditorSettings>();
 	for (UClass* DerivedClass : DerivedClasses)
 	{
 		if (DerivedClass->HasAnyClassFlags(IgnoreClassFlags))
@@ -208,6 +215,10 @@ void FGameQuestClassCollector::ForEachDerivedClasses(const TSubclassOf<UGameQues
 			continue;
 		}
 		if (DerivedClass->GetName().StartsWith(TEXT("SKEL_")) || DerivedClass->GetName().StartsWith(TEXT("REINST_")))
+		{
+			continue;
+		}
+		if (EditorSettings->HiddenScriptTypes.Contains(DerivedClass))
 		{
 			continue;
 		}
@@ -242,6 +253,11 @@ void FGameQuestClassCollector::ForEachDerivedClasses(const TSubclassOf<UGameQues
 			{
 				return E == ClassSoftPath;
 			}))
+			{
+				continue;
+			}
+
+			if (EditorSettings->HiddenScriptTypes.Contains(ClassSoftPath))
 			{
 				continue;
 			}
