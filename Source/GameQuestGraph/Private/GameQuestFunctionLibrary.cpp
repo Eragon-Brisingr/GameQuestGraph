@@ -37,11 +37,23 @@ DEFINE_FUNCTION(UGameQuestFunctionLibrary::execQuestElementToPtr)
 	P_NATIVE_END;
 }
 
-bool UGameQuestFunctionLibrary::IsBranchesActivate(const FGameQuestSequencePtr& Sequence)
+bool UGameQuestFunctionLibrary::IsQuestSequenceBranchesActivate(const FGameQuestSequencePtr& Sequence)
 {
 	if (const FGameQuestSequenceBranch* Branch = GameQuestCast<FGameQuestSequenceBranch>(*Sequence))
 	{
 		return Branch->bIsBranchesActivated;
+	}
+	return false;
+}
+
+bool UGameQuestFunctionLibrary::IsQuestSequenceBranchInterrupted(const FGameQuestSequencePtr& Sequence, int32 BranchIndex)
+{
+	if (const FGameQuestSequenceBranch* Branch = GameQuestCast<FGameQuestSequenceBranch>(*Sequence))
+	{
+		if (Branch->Branches.IsValidIndex(BranchIndex))
+		{
+			return Branch->Branches[BranchIndex].bInterrupted;
+		}
 	}
 	return false;
 }

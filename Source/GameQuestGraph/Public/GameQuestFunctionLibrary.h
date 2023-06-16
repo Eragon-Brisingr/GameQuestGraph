@@ -33,7 +33,13 @@ public:
 	UFUNCTION(BlueprintPure, Category = "GameQuest|Utils")
 	static int32 GetQuestSequenceId(const FGameQuestSequencePtr& Sequence) { return Sequence ? Sequence->OwnerQuest->GetSequenceId(*Sequence) : GameQuest::IdNone; }
 	UFUNCTION(BlueprintPure, Category = "GameQuest|Utils")
-	static bool IsBranchesActivate(const FGameQuestSequencePtr& Sequence);
+	static bool IsQuestSequenceActivate(const FGameQuestSequencePtr& Sequence) { return Sequence ? Sequence->bIsActivated : false; }
+	UFUNCTION(BlueprintPure, Category = "GameQuest|Utils")
+	static bool IsQuestSequenceInterrupted(const FGameQuestSequencePtr& Sequence) { return Sequence ? Sequence->bInterrupted : false; }
+	UFUNCTION(BlueprintPure, Category = "GameQuest|Utils")
+	static bool IsQuestSequenceBranchesActivate(const FGameQuestSequencePtr& Sequence);
+	UFUNCTION(BlueprintPure, Category = "GameQuest|Utils")
+	static bool IsQuestSequenceBranchInterrupted(const FGameQuestSequencePtr& Sequence, int32 BranchIndex);
 	UFUNCTION(BlueprintCallable, Category = "GameQuest|Utils")
 	static TArray<FGameQuestElementPtr> GetQuestSequenceListElements(const FGameQuestSequencePtr& Sequence, TArray<EGameQuestSequenceLogic>& Logics);
 	UFUNCTION(BlueprintCallable, Category = "GameQuest|Utils")
