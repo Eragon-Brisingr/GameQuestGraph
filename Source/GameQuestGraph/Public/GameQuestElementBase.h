@@ -172,7 +172,7 @@ struct GAMEQUESTGRAPH_API FGameQuestElementScript : public FGameQuestElementBase
 
 	using Super = FGameQuestElementBase;
 public:
-	UPROPERTY(BlueprintReadWrite, Instanced, NotReplicated)
+	UPROPERTY(BlueprintReadWrite, SaveGame, Instanced, NotReplicated)
 	TObjectPtr<UGameQuestElementScriptable> Instance;
 
 	void WhenQuestInitProperties(const FStructProperty* Property) override;
