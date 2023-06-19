@@ -34,7 +34,7 @@ namespace GameQuestFactoryUtils
 			{
 				if (InClass->HasAnyClassFlags(AllowedClassFlags) && InClass->IsChildOf<UGameQuestGraphBase>())
 				{
-					return EditorSettings->HiddenGameQuestGraphTypes.Contains(InClass) == false;
+					return EditorSettings->HiddenQuestTypes.Contains(InClass) == false;
 				}
 				return false;
 			}
@@ -43,7 +43,7 @@ namespace GameQuestFactoryUtils
 			{
 				if (InUnloadedClassData->HasAnyClassFlags(AllowedClassFlags) && InUnloadedClassData->IsChildOf(UGameQuestGraphBase::StaticClass()))
 				{
-					return EditorSettings->HiddenGameQuestGraphTypes.ContainsByPredicate([&](const TSoftClassPtr<UGameQuestGraphBase>& E){ return E.ToSoftObjectPath() == FSoftObjectPath{ InUnloadedClassData->GetClassPathName() }; }) == false;
+					return EditorSettings->HiddenQuestTypes.ContainsByPredicate([&](const TSoftClassPtr<UGameQuestGraphBase>& E){ return E.ToSoftObjectPath() == FSoftObjectPath{ InUnloadedClassData->GetClassPathName() }; }) == false;
 				}
 				return false;
 			}
@@ -79,7 +79,7 @@ UObject* UGameQuestGraphFactory::FactoryCreateNew(UClass* Class, UObject* InPare
 {
 	UGameQuestGraphBlueprint* NewBP = CastChecked<UGameQuestGraphBlueprint>(FKismetEditorUtilities::CreateBlueprint(ToCreateGameQuestClass, InParent, Name, BPTYPE_Normal, UGameQuestGraphBlueprint::StaticClass(), UGameQuestGraphGeneratedClass::StaticClass(), CallingContext));
 
-	UEdGraph* GameQuestGraph = FBlueprintEditorUtils::CreateNewGraph(NewBP, TEXT("Quest_Graph"), UEdGraph::StaticClass(), UEdGraphSchemaGameQuest::StaticClass());
+	UEdGraph* GameQuestGraph = FBlueprintEditorUtils::CreateNewGraph(NewBP, TEXT("QuestGraph"), UEdGraph::StaticClass(), UEdGraphSchemaGameQuest::StaticClass());
 	GameQuestGraph->bAllowDeletion = false;
 	GameQuestGraph->bAllowRenaming = false;
 	NewBP->GameQuestGraph = GameQuestGraph;
