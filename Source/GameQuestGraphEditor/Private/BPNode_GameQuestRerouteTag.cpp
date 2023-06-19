@@ -140,20 +140,20 @@ void UBPNode_GameQuestRerouteTag::ExpandNode(FKismetCompilerContext& CompilerCon
 		return;
 	}
 
-	UK2Node_CallFunction* CallTryActivateNode = CompilerContext.SpawnIntermediateNode<UK2Node_CallFunction>(this);
-	CallTryActivateNode->SetFromFunction(UGameQuestGraphBase::StaticClass()->FindFunctionByName(GET_FUNCTION_NAME_CHECKED(UGameQuestGraphBase, ProcessRerouteTag)));
-	CallTryActivateNode->AllocateDefaultPins();
+	UK2Node_CallFunction* CallProcessRerouteTagNode = CompilerContext.SpawnIntermediateNode<UK2Node_CallFunction>(this);
+	CallProcessRerouteTagNode->SetFromFunction(UGameQuestGraphBase::StaticClass()->FindFunctionByName(GET_FUNCTION_NAME_CHECKED(UGameQuestGraphBase, ProcessRerouteTag)));
+	CallProcessRerouteTagNode->AllocateDefaultPins();
 
-	CallTryActivateNode->FindPinChecked(TEXT("RerouteTagName"))->DefaultValue = RerouteTag.ToString();
+	CallProcessRerouteTagNode->FindPinChecked(TEXT("RerouteTagName"))->DefaultValue = RerouteTag.ToString();
 
 	const FName RerouteTagName = FGameQuestRerouteTag::MakeVariableName(RerouteTag);
 	UK2Node_VariableGet* GetStructNode = CompilerContext.SpawnIntermediateNode<UK2Node_VariableGet>(this);
 	GetStructNode->VariableReference.SetSelfMember(RerouteTagName);
 	GetStructNode->AllocateDefaultPins();
-	CallTryActivateNode->FindPinChecked(TEXT("RerouteTag"))->MakeLinkTo(GetStructNode->FindPinChecked(RerouteTagName));
+	CallProcessRerouteTagNode->FindPinChecked(TEXT("RerouteTag"))->MakeLinkTo(GetStructNode->FindPinChecked(RerouteTagName));
 
-	CompilerContext.MovePinLinksToIntermediate(*GetExecPin(), *CallTryActivateNode->GetExecPin());
-	CompilerContext.MovePinLinksToIntermediate(*GetThenPin(), *CallTryActivateNode->GetThenPin());
+	CompilerContext.MovePinLinksToIntermediate(*GetExecPin(), *CallProcessRerouteTagNode->GetExecPin());
+	CompilerContext.MovePinLinksToIntermediate(*GetThenPin(), *CallProcessRerouteTagNode->GetThenPin());
 }
 
 #undef LOCTEXT_NAMESPACE

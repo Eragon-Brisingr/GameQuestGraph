@@ -8,6 +8,7 @@
 
 class UGameQuestGraphBase;
 
+// meta = (GenerateSingleEvaluateFunction) will generate single evaluate property function, can use MakeEvaluateSingleParamFunctionName get function name
 USTRUCT(BlueprintType, BlueprintInternalUseOnly, meta = (Hidden))
 struct GAMEQUESTGRAPH_API FGameQuestNodeBase
 {
@@ -26,6 +27,7 @@ public:
 	void GetEvaluateGraphExposedInputs(bool bHasAuthority) const;
 
 	static FName MakeEvaluateParamsFunctionName(const FName& NodeName) { return *FString::Printf(TEXT("%s_EvaluateActionParams"), *NodeName.ToString()); }
+	static FName MakeEvaluateSingleParamFunctionName(const FName& NodeName, const FName& PropertyName) { return *FString::Printf(TEXT("%s_EvaluateActionParams_%s"), *NodeName.ToString(), *PropertyName.ToString()); }
 
 	void MarkNodeNetDirty() const;
 protected:

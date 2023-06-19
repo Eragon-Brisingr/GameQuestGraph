@@ -480,6 +480,44 @@ void UBPNode_GameQuestNodeBase::ExpandNode(FKismetCompilerContext& CompilerConte
 		{
 			const FStructMemberSetGuard StructMemberSetGuard{ NodeStruct };
 
+			TArray<FOptionalPinFromProperty> ClientShowPinForProperties;
+			for (const FOptionalPinFromProperty& ShowPin : ShowPinForProperties)
+			{
+				if (ShowPin.bShowPin == false)
+				{
+					continue;
+				}
+				const FProperty* Property = NodeStruct->FindPropertyByName(ShowPin.PropertyName);
+				if (Property == nullptr)
+				{
+					continue;
+				}
+				static const FName MD_GenerateSingleEvaluateFunction = TEXT("GenerateSingleEvaluateFunction");
+				if (Property->HasMetaData(MD_GenerateSingleEvaluateFunction))
+				{
+					UK2Node_Event* EvaluateSingleParamNode = CompilerContext.SpawnIntermediateEventNode<UK2Node_Event>(this, nullptr, SourceGraph);
+					EvaluateSingleParamNode->bInternalEvent = true;
+					EvaluateSingleParamNode->CustomFunctionName = FGameQuestNodeBase::MakeEvaluateSingleParamFunctionName(RefVarName, ShowPin.PropertyName);
+					EvaluateSingleParamNode->AllocateDefaultPins();
+
+					UK2Node_StructMemberSet* SingleMemberSetNode = CompilerContext.SpawnIntermediateNode<UK2Node_StructMemberSet>(this);
+					SingleMemberSetNode->VariableReference.SetSelfMember(RefVarName);
+					SingleMemberSetNode->StructType = NodeStruct;
+					SingleMemberSetNode->ShowPinForProperties.Add(ShowPin);
+					SingleMemberSetNode->AllocateDefaultPins();
+
+					UEdGraphPin* OriginPin = FindPinChecked(ShowPin.PropertyName);
+					CompilerContext.CopyPinLinksToIntermediate(*OriginPin, *SingleMemberSetNode->FindPinChecked(ShowPin.PropertyName));
+
+					SingleMemberSetNode->GetExecPin()->MakeLinkTo(EvaluateSingleParamNode->FindPinChecked(UEdGraphSchema_K2::PN_Then));
+				}
+				if (Property->HasAnyPropertyFlags(CPF_RepSkip) == false)
+				{
+					continue;
+				}
+				ClientShowPinForProperties.Add(ShowPin);
+			}
+
 			UK2Node_StructMemberSet* AuthorityMemberSetNode = CompilerContext.SpawnIntermediateNode<UK2Node_StructMemberSet>(this);
 			{
 				AuthorityMemberSetNode->VariableReference.SetSelfMember(RefVarName);
@@ -490,28 +528,16 @@ void UBPNode_GameQuestNodeBase::ExpandNode(FKismetCompilerContext& CompilerConte
 				AuthorityThenPin = AuthorityMemberSetNode->FindPinChecked(UEdGraphSchema_K2::PN_Then);
 			}
 
-			UK2Node_StructMemberSet* ClientMemberSetNode = CompilerContext.SpawnIntermediateNode<UK2Node_StructMemberSet>(this);
-			TArray<FName> ClientEvalPropertyNames;
+			UK2Node_StructMemberSet* ClientMemberSetNode = nullptr;
+			if (ClientShowPinForProperties.Num() > 0)
 			{
+				ClientMemberSetNode = CompilerContext.SpawnIntermediateNode<UK2Node_StructMemberSet>(this);
 				ClientMemberSetNode->VariableReference.SetSelfMember(RefVarName);
 				ClientMemberSetNode->StructType = NodeStruct;
-				for (const FOptionalPinFromProperty& ShowPin : ShowPinForProperties)
-				{
-					if (ShowPin.bShowPin == false)
-					{
-						continue;
-					}
-					const FProperty* Property = NodeStruct->FindPropertyByName(ShowPin.PropertyName);
-					if (Property == nullptr || Property->HasAnyPropertyFlags(CPF_RepSkip) == false)
-					{
-						continue;
-					}
-					ClientEvalPropertyNames.Add(ShowPin.PropertyName);
-					ClientMemberSetNode->ShowPinForProperties.Add(ShowPin);
-				}
+				ClientMemberSetNode->ShowPinForProperties = MoveTemp(ClientShowPinForProperties);
 				ClientMemberSetNode->AllocateDefaultPins();
-				AuthorityThenPin->MakeLinkTo(ClientMemberSetNode->GetExecPin());
-				AuthorityThenPin = ClientMemberSetNode->FindPinChecked(UEdGraphSchema_K2::PN_Then);
+				ClientThenPin->MakeLinkTo(ClientMemberSetNode->GetExecPin());
+				ClientThenPin = ClientMemberSetNode->FindPinChecked(UEdGraphSchema_K2::PN_Then);
 			}
 			for (const FOptionalPinFromProperty& OptionalPin : ShowPinForProperties)
 			{
@@ -521,9 +547,12 @@ void UBPNode_GameQuestNodeBase::ExpandNode(FKismetCompilerContext& CompilerConte
 				}
 				UEdGraphPin* OriginPin = FindPinChecked(OptionalPin.PropertyName);
 				CompilerContext.CopyPinLinksToIntermediate(*OriginPin, *AuthorityMemberSetNode->FindPinChecked(OptionalPin.PropertyName));
-				if (ClientEvalPropertyNames.Contains(OptionalPin.PropertyName))
+				if (ClientMemberSetNode)
 				{
-					CompilerContext.CopyPinLinksToIntermediate(*OriginPin, *ClientMemberSetNode->FindPinChecked(OptionalPin.PropertyName));
+					if (UEdGraphPin* Pin = ClientMemberSetNode->FindPin(OptionalPin.PropertyName))
+					{
+						CompilerContext.CopyPinLinksToIntermediate(*OriginPin, *Pin);
+					}
 				}
 				OriginPin->BreakAllPinLinks();
 			}

@@ -34,4 +34,6 @@ public:
 	TArray<TSoftObjectPtr<UScriptStruct>> HiddenNativeTypes;
 	UPROPERTY(EditAnywhere, Config)
 	TArray<TSoftClassPtr<UObject>> HiddenScriptTypes;
+	UPROPERTY(EditAnywhere, Config)
+	TArray<TSoftClassPtr<UGameQuestGraphBase>> HiddenGameQuestGraphTypes;
 };

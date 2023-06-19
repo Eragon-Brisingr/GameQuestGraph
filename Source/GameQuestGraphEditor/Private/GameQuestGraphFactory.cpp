@@ -10,6 +10,7 @@
 #include "GameQuestGraphBase.h"
 #include "GameQuestGraphBlueprint.h"
 #include "GameQuestGraphEditor.h"
+#include "GameQuestGraphEditorSettings.h"
 #include "ObjectEditorUtils.h"
 #include "Engine/MemberReference.h"
 #include "Kismet2/BlueprintEditorUtils.h"
@@ -27,23 +28,30 @@ namespace GameQuestFactoryUtils
 		{
 		public:
 			EClassFlags AllowedClassFlags = CLASS_Abstract;
+			const UGameQuestGraphEditorSettings* EditorSettings = GetDefault<UGameQuestGraphEditorSettings>();
 
 			bool IsClassAllowed(const FClassViewerInitializationOptions& InInitOptions, const UClass* InClass, TSharedRef<class FClassViewerFilterFuncs> InFilterFuncs) override
 			{
-				return InClass->HasAnyClassFlags(AllowedClassFlags) && InClass->IsChildOf<UGameQuestGraphBase>();
+				if (InClass->HasAnyClassFlags(AllowedClassFlags) && InClass->IsChildOf<UGameQuestGraphBase>())
+				{
+					return EditorSettings->HiddenGameQuestGraphTypes.Contains(InClass) == false;
+				}
+				return false;
 			}
 
 			bool IsUnloadedClassAllowed(const FClassViewerInitializationOptions& InInitOptions, const TSharedRef<const class IUnloadedBlueprintData> InUnloadedClassData, TSharedRef<class FClassViewerFilterFuncs> InFilterFuncs) override
 			{
-				return InUnloadedClassData->HasAnyClassFlags(AllowedClassFlags) && InUnloadedClassData->IsChildOf(UGameQuestGraphBase::StaticClass());
+				if (InUnloadedClassData->HasAnyClassFlags(AllowedClassFlags) && InUnloadedClassData->IsChildOf(UGameQuestGraphBase::StaticClass()))
+				{
+					return EditorSettings->HiddenGameQuestGraphTypes.ContainsByPredicate([&](const TSoftClassPtr<UGameQuestGraphBase>& E){ return E.ToSoftObjectPath() == FSoftObjectPath{ InUnloadedClassData->GetClassPathName() }; }) == false;
+				}
+				return false;
 			}
 		};
 
 		CreateGameQuestClass = nullptr;
 
-		FClassViewerModule& ClassViewerModule = FModuleManager::LoadModuleChecked<FClassViewerModule>("ClassViewer");
 		FClassViewerInitializationOptions Options;
-
 		Options.Mode = EClassViewerMode::ClassPicker;
 		Options.ClassFilters.Add(MakeShared<FGameQuestElementFilterViewer>());
 		Options.NameTypeToDisplay = EClassViewerNameTypeToDisplay::Dynamic;
