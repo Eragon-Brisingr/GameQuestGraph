@@ -9,6 +9,7 @@
 #include "GameQuestNodeBase.h"
 #include "GameQuestSequenceBase.h"
 #include "Net/UnrealNetwork.h"
+#include "Net/Core/PushModel/PushModel.h"
 
 TAutoConsoleVariable<bool> CVarGameQuestEnableCheat
 {
@@ -122,10 +123,6 @@ bool UGameQuestGraphBase::ReplicateSubobject(UActorChannel* Channel, FOutBunch* 
 
 void UGameQuestGraphBase::OnRep_ActivatedSequences()
 {
-#if WITH_EDITOR
-	TGuardValue<int32> GPlayInEditorIDGuard(GPlayInEditorID, GetWorld()->GetOutermost()->GetPIEInstanceID());
-#endif
-
 	TSet<uint16> ActivatedSequencesSet{ ActivatedSequences };
 	TSet<uint16> DeactivatedSequences{ PreActivatedSequences.Difference(ActivatedSequencesSet) };
 	TSet<uint16> CurActivatedSequences{ ActivatedSequencesSet.Difference(PreActivatedSequences) };
@@ -146,10 +143,6 @@ void UGameQuestGraphBase::OnRep_ActivatedSequences()
 
 void UGameQuestGraphBase::OnRep_ActivatedBranches()
 {
-#if WITH_EDITOR
-	TGuardValue<int32> GPlayInEditorIDGuard(GPlayInEditorID, GetWorld()->GetOutermost()->GetPIEInstanceID());
-#endif
-
 	TSet<uint16> ActivatedBranchesSet{ ActivatedBranches };
 	TSet<uint16> DeactivatedBranches{ PreActivatedBranches.Difference(ActivatedBranchesSet) };
 	TSet<uint16> CurActivatedBranches{ ActivatedBranchesSet.Difference(PreActivatedBranches) };
@@ -224,10 +217,6 @@ void UGameQuestGraphBase::SetElementUnfinishedToServer_Implementation(const uint
 
 void UGameQuestGraphBase::ReactiveQuest()
 {
-#if WITH_EDITOR
-	TGuardValue<int32> GPlayInEditorIDGuard(GPlayInEditorID, GetWorld()->GetOutermost()->GetPIEInstanceID());
-#endif
-
 	check(bIsActivated == false);
 	bIsActivated = true;
 	UE_LOG(LogGameQuest, Verbose, TEXT("ReactiveQuest %s"), *GetName());
@@ -250,10 +239,6 @@ void UGameQuestGraphBase::ReactiveQuest()
 
 void UGameQuestGraphBase::DeactivateQuest()
 {
-#if WITH_EDITOR
-	TGuardValue<int32> GPlayInEditorIDGuard(GPlayInEditorID, GetWorld()->GetOutermost()->GetPIEInstanceID());
-#endif
-
 	check(bIsActivated);
 	bIsActivated = false;
 	UE_LOG(LogGameQuest, Verbose, TEXT("DeactivateQuest %s"), *GetName());

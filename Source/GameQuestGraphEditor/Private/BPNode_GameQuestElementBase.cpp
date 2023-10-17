@@ -548,7 +548,7 @@ void UBPNode_GameQuestElementBase::GetNodeContextMenuActions(UToolMenu* Menu, UG
 
 FGameQuestElementBase* UBPNode_GameQuestElementBase::GetElementNode() const
 {
-	return StructNodeInstance.GetMutablePtr<FGameQuestElementBase>();
+	return const_cast<FInstancedStruct&>(StructNodeInstance).GetMutablePtr<FGameQuestElementBase>();
 }
 
 void UBPNode_GameQuestElementBase::CopyTermDefaultsToDefaultNode(FGameQuestGraphCompilerContext& CompilerContext, UObject* DefaultObject, UGameQuestGraphGeneratedClass* ObjectClass, FStructProperty* NodeProperty)

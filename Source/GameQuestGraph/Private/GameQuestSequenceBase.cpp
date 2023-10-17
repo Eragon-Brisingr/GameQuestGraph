@@ -7,6 +7,7 @@
 #include "GameQuestGraphBase.h"
 #include "Engine/ActorChannel.h"
 #include "Engine/AssetManager.h"
+#include "Net/Core/PushModel/PushModel.h"
 
 namespace Context
 {
@@ -63,10 +64,6 @@ void FGameQuestSequenceBase::OnRepDeactivateSequence(uint16 SequenceId)
 template <bool bHasAuthority>
 void FGameQuestSequenceBase::ActivateSequenceImpl(uint16 SequenceId)
 {
-#if WITH_EDITOR
-	TGuardValue<int32> GPlayInEditorIDGuard(GPlayInEditorID, OwnerQuest->GetWorld()->GetOutermost()->GetPIEInstanceID());
-#endif
-
 	check(bIsActivated == false);
 	check(bInterrupted == false);
 	bIsActivated = true;
@@ -97,10 +94,6 @@ void FGameQuestSequenceBase::ActivateSequenceImpl(uint16 SequenceId)
 template <bool bHasAuthority>
 void FGameQuestSequenceBase::DeactivateSequenceImpl(uint16 SequenceId)
 {
-#if WITH_EDITOR
-	TGuardValue<int32> GPlayInEditorIDGuard(GPlayInEditorID, OwnerQuest->GetWorld()->GetOutermost()->GetPIEInstanceID());
-#endif
-
 	check(bIsActivated);
 	bIsActivated = false;
 	if constexpr (bHasAuthority)
@@ -424,9 +417,6 @@ void FGameQuestSequenceBranch::WhenElementFinished(FGameQuestElementBase* Finish
 			});
 			if (!IsAllBranchElementAllowFinish)
 			{
-#if WITH_EDITOR
-				TGuardValue<int32> GPlayInEditorIDGuard(GPlayInEditorID, OwnerQuest->GetWorld()->GetOutermost()->GetPIEInstanceID());
-#endif
 				FGameQuestElementBase* Element = OwnerQuest->GetElementPtr(Branch->Element);
 				Element->DeactivateElement(true);
 				ExecuteFinishEvent(OnElementFinishedEvent.Event, Branch->NextSequences, FinishedElementId);

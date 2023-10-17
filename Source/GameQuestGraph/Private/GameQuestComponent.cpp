@@ -4,9 +4,9 @@
 #include "GameQuestComponent.h"
 
 #include "GameQuestGraphBase.h"
-#include "GameQuestSequenceBase.h"
 #include "Engine/ActorChannel.h"
 #include "Net/UnrealNetwork.h"
+#include "Net/Core/PushModel/PushModel.h"
 
 UGameQuestComponent::UGameQuestComponent()
 {
