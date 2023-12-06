@@ -86,7 +86,7 @@ struct GAMEQUESTGRAPH_API FGameQuestSequenceSingle : public FGameQuestSequenceBa
 	GENERATED_BODY()
 public:
 	UPROPERTY(NotReplicated)
-	uint16 Element;
+	uint16 Element = 0;
 
 	UPROPERTY(SaveGame)
 	TArray<uint16> NextSequences;
