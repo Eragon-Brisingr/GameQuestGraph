@@ -51,10 +51,10 @@ The container of quest elements, multiple quest group elements form a quest sequ
 
 1. Single sequence  
 ![SingleSequence](Docs/SingleSequence.png)  
-Can only accommodate one judgment condition, and the condition is completed
+Can only accommodate one judgment condition, and when the condition finished mean sequence is completed
 2. List sequence  
 ![ListSequence](Docs/ListSequence.png)  
-Can accommodate multiple judgment conditions, and the conditions in the list are completed when the conditions are met
+Can accommodate multiple judgment conditions, and when conditions in the list are finished mean sequence is completed
 3. Branch sequence  
 ![BranchSequence](Docs/BranchSequence.png)  
 The elements in the list will activate branches after meeting the completion conditions. If the branch is completed, the sequence after the branch will be performed (there is a choice in the branch sequence whether to interrupt other branches, if not interrupting other branches, the corresponding successor sequence will be executed after the other branches end)
