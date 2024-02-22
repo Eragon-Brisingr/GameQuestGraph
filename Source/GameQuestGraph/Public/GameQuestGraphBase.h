@@ -31,7 +31,7 @@ public:
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	int32 GetFunctionCallspace(UFunction* Function, FFrame* Stack) override;
 	bool CallRemoteFunction(UFunction* Function, void* Parameters, FOutParmRec* OutParms, FFrame* Stack) override;
-	virtual bool ReplicateSubobject(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags);
+	virtual bool ReplicateSubobject(class UActorChannel* Channel, class FOutBunch* Bunch, struct FReplicationFlags* RepFlags);
 private:
 	uint8 bIsActivated : 1;
 	UPROPERTY(Replicated, SaveGame)
