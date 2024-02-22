@@ -186,7 +186,7 @@ QuestRerouteTag一般用作声明子任务完成时的后续逻辑引脚，相�
 
 ![ConsoleCommandFinishElement](Docs/ConsoleCommandFinishElement.png)  
 
-* 总控：  
+* 全局开关  
   GameQuest.EnableCheat <0:关闭/1:打开>（非Shipping模式默认打开）
 * 强制完成元素  
   PIE模式格式：GameQuest.FinishElement.\<Server/Client0>.\<游戏任务类型名>.\<任务元素全名>  

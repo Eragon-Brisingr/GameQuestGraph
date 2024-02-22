@@ -186,7 +186,7 @@ The game quest debug panel will display the current debug quest tree, and clicki
 
 ![ConsoleCommandFinishElement](Docs/ConsoleCommandFinishElement.png)  
 
-* Master control:
+* Golbal switch
   GameQuest.EnableCheat <0: off/1: on> (default on for non-Shipping mode)
 * Force completion of elements
   PIE mode format: GameQuest.FinishElement.\<Server/Client0>.\<Game quest type name>.\<Quest element full name>
