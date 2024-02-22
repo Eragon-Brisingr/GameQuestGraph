@@ -174,5 +174,5 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "GameQuest")
 	bool HasAuthority() const;
 	UFUNCTION(BlueprintCallable, Category = "GameQuest")
-	bool IsLocalController() const;
+	bool IsLocalControlled() const;
 };

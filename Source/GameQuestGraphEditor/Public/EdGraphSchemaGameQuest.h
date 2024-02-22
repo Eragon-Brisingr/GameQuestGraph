@@ -6,9 +6,6 @@
 #include "EdGraphSchema_K2.h"
 #include "EdGraphSchemaGameQuest.generated.h"
 
-/**
- *
- */
 UCLASS()
 class GAMEQUESTGRAPHEDITOR_API UEdGraphSchemaGameQuest : public UEdGraphSchema_K2
 {

@@ -8,6 +8,11 @@
 #include "GameQuestGraphBlueprint.h"
 #include "GameQuestNodeBase.h"
 #include "GameQuestSequenceBase.h"
+#include "Engine/Engine.h"
+#include "Engine/NetDriver.h"
+#include "GameFramework/Actor.h"
+#include "GameFramework/Controller.h"
+#include "HAL/IConsoleManager.h"
 #include "Net/UnrealNetwork.h"
 #include "Net/Core/PushModel/PushModel.h"
 
@@ -1027,7 +1032,7 @@ bool UGameQuestGraphBase::HasAuthority() const
 	return false;
 }
 
-bool UGameQuestGraphBase::IsLocalController() const
+bool UGameQuestGraphBase::IsLocalControlled() const
 {
 	if (const AActor* OwnerActor = Owner ? Owner->GetTypedOuter<AActor>() : nullptr)
 	{

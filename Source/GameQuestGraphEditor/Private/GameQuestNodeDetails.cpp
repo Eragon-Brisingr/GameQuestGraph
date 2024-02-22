@@ -1,7 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "GameQuestBpNodeDetails.h"
+#include "GameQuestNodeDetails.h"
 
 #include "BPNode_GameQuestElementBase.h"
 #include "BPNode_GameQuestNodeBase.h"
@@ -197,7 +197,7 @@ UBPNode_GameQuestNodeBase* GetFirstNode(IDetailLayoutBuilder& DetailBuilder)
 	return FirstNodeType;
 }
 
-void FGameQuestBpNodeDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
+void FGameQuestNodeDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 {
 	// Hide the pin options property; it's represented inline per-property instead
 	DetailBuilder.HideCategory(TEXT("PinOptions"));
@@ -249,7 +249,7 @@ void FGameQuestBpNodeDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuild
 	}
 }
 
-void FGameQuestBpNodeScriptElementDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
+void FGameQuestNodeScriptElementDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 {
 	if (DetailBuilder.HasClassDefaultObject())
 	{

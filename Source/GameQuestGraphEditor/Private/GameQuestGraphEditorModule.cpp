@@ -2,10 +2,11 @@
 
 #include "AssetToolsModule.h"
 #include "GameQuestGraphFactory.h"
-#include "GameQuestBpNodeDetails.h"
+#include "GameQuestNodeDetails.h"
 #include "GameQuestGraphBlueprint.h"
 #include "GameQuestGraphCompilerContext.h"
 #include "GameQuestGraphEditorStyle.h"
+#include "PropertyEditorModule.h"
 
 #define LOCTEXT_NAMESPACE "GameQuestGraphEditor"
 
@@ -24,8 +25,8 @@ void FGameQuestGraphEditorModule::StartupModule()
 	}
 	if (FPropertyEditorModule* PropertyModule = FModuleManager::GetModulePtr<FPropertyEditorModule>("PropertyEditor"))
 	{
-		PropertyModule->RegisterCustomClassLayout(TEXT("BPNode_GameQuestNodeBase"), FOnGetDetailCustomizationInstance::CreateStatic(&FGameQuestBpNodeDetails::MakeInstance));
-		PropertyModule->RegisterCustomClassLayout(TEXT("BPNode_GameQuestElementScript"), FOnGetDetailCustomizationInstance::CreateStatic(&FGameQuestBpNodeScriptElementDetails::MakeInstance));
+		PropertyModule->RegisterCustomClassLayout(TEXT("BPNode_GameQuestNodeBase"), FOnGetDetailCustomizationInstance::CreateStatic(&FGameQuestNodeDetails::MakeInstance));
+		PropertyModule->RegisterCustomClassLayout(TEXT("BPNode_GameQuestElementScript"), FOnGetDetailCustomizationInstance::CreateStatic(&FGameQuestNodeScriptElementDetails::MakeInstance));
 	}
 
 	FGameQuestGraphSlateStyle::StartupModule();

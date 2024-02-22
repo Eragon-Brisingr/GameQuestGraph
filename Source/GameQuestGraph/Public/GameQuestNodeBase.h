@@ -33,7 +33,7 @@ public:
 protected:
 	virtual void WhenQuestInitProperties(const FStructProperty* Property) {}
 	virtual bool ShouldReplicatedSubobject() const { return false; }
-	virtual bool ReplicateSubobject(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags) { return false; }
+	virtual bool ReplicateSubobject(class UActorChannel* Channel, class FOutBunch* Bunch, struct FReplicationFlags* RepFlags) { return false; }
 	virtual void WhenOnRepValue(const FGameQuestNodeBase& PreValue) {}
 
 #if WITH_EDITOR

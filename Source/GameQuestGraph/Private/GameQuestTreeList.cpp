@@ -8,9 +8,12 @@
 #include "GameQuestSequenceBase.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/TextBlock.h"
+#include "Components/VerticalBox.h"
 #include "Slate/SObjectWidget.h"
+#include "Widgets/SOverlay.h"
 #include "Widgets/Layout/SExpandableArea.h"
 #include "Widgets/Layout/SSeparator.h"
+#include "Widgets/Text/STextBlock.h"
 
 #define LOCTEXT_NAMESPACE "GameQuestGraph"
 

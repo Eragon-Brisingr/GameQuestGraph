@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "AssetTypeActions/AssetTypeActions_Blueprint.h"
-#include "UObject/Object.h"
+#include "Factories/Factory.h"
 #include "GameQuestGraphFactory.generated.h"
 
 class UGameQuestGraphBase;

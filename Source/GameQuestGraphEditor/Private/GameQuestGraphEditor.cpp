@@ -18,6 +18,9 @@
 #include "GameQuestTreeList.h"
 #include "GraphEditorActions.h"
 #include "Kismet2/KismetEditorUtilities.h"
+#include "Widgets/Docking/SDockTab.h"
+#include "Widgets/Input/SButton.h"
+#include "Widgets/Input/SCheckBox.h"
 #include "Widgets/Layout/SScrollBox.h"
 #include "Widgets/Layout/SSeparator.h"
 

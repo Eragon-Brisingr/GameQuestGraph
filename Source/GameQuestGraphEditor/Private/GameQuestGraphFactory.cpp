@@ -16,6 +16,7 @@
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "Kismet2/KismetEditorUtilities.h"
 #include "Kismet2/SClassPickerDialog.h"
+#include "Misc/MessageDialog.h"
 #include "Settings/EditorStyleSettings.h"
 
 #define LOCTEXT_NAMESPACE "GameQuestGraphEditor"

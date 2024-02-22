@@ -10,16 +10,16 @@ class IDetailPropertyRow;
 class IPropertyHandle;
 struct FOptionalPinFromProperty;
 
-class GAMEQUESTGRAPHEDITOR_API FGameQuestBpNodeDetails : public IDetailCustomization
+class GAMEQUESTGRAPHEDITOR_API FGameQuestNodeDetails : public IDetailCustomization
 {
 public:
-	static TSharedRef<IDetailCustomization> MakeInstance() { return MakeShared<FGameQuestBpNodeDetails>(); }
+	static TSharedRef<IDetailCustomization> MakeInstance() { return MakeShared<FGameQuestNodeDetails>(); }
 	void CustomizeDetails(IDetailLayoutBuilder& DetailBuilder) override;
 };
 
-class GAMEQUESTGRAPHEDITOR_API FGameQuestBpNodeScriptElementDetails : public IDetailCustomization
+class GAMEQUESTGRAPHEDITOR_API FGameQuestNodeScriptElementDetails : public IDetailCustomization
 {
 public:
-	static TSharedRef<IDetailCustomization> MakeInstance() { return MakeShared<FGameQuestBpNodeScriptElementDetails>(); }
+	static TSharedRef<IDetailCustomization> MakeInstance() { return MakeShared<FGameQuestNodeScriptElementDetails>(); }
 	void CustomizeDetails(IDetailLayoutBuilder& DetailBuilder) override;
 };

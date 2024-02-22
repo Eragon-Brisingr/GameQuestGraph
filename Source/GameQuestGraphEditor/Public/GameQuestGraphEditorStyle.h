@@ -7,9 +7,6 @@
 
 class ISlateStyle;
 
-/**
- *
- */
 namespace GameQuestGraphEditorStyle
 {
 	namespace ElementContentBorder

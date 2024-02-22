@@ -6,6 +6,8 @@
 #include "Engine/DeveloperSettings.h"
 #include "GameQuestGraphEditorSettings.generated.h"
 
+class UGameQuestGraphBase;
+
 UCLASS(Config=Editor, defaultconfig, CollapseCategories)
 class GAMEQUESTGRAPHEDITOR_API UGameQuestGraphEditorSettings : public UDeveloperSettings
 {

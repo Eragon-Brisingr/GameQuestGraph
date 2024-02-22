@@ -49,7 +49,7 @@ private:
 	void Tick(float DeltaSeconds) { WhenTick(DeltaSeconds); }
 public:
 	UPROPERTY(SaveGame)
-	uint16 PreSequence = GameQuest::IdNone;
+	uint16 PreSequence{ GameQuest::IdNone };
 	uint8 bIsActivated : 1;
 	UPROPERTY(SaveGame)
 	uint8 bInterrupted : 1;
@@ -86,7 +86,7 @@ struct GAMEQUESTGRAPH_API FGameQuestSequenceSingle : public FGameQuestSequenceBa
 	GENERATED_BODY()
 public:
 	UPROPERTY(NotReplicated)
-	uint16 Element = 0;
+	uint16 Element{ 0 };
 
 	UPROPERTY(SaveGame)
 	TArray<uint16> NextSequences;

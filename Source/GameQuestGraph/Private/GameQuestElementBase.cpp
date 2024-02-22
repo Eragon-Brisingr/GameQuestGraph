@@ -6,7 +6,13 @@
 #include "GameQuestGraphBase.h"
 #include "GameQuestSequenceBase.h"
 #include "Engine/ActorChannel.h"
+#include "Engine/BlueprintGeneratedClass.h"
 #include "Engine/Console.h"
+#include "Engine/Engine.h"
+#include "Engine/GameViewportClient.h"
+#include "Engine/NetDriver.h"
+#include "Engine/World.h"
+#include "HAL/IConsoleManager.h"
 
 
 bool FGameQuestElementBase::IsInterrupted() const
@@ -76,18 +82,18 @@ bool FGameQuestElementBase::ShouldEnableJudgment(bool bHasAuthority) const
 		}
 		else
 		{
-			return OwnerQuest->IsLocalController();
+			return OwnerQuest->IsLocalControlled();
 		}
 	}
 	if (bHasAuthority)
 	{
 		const bool bIsLocalJudgment = IsLocalJudgment();
-		return bIsLocalJudgment == false || OwnerQuest->IsLocalController();
+		return bIsLocalJudgment == false || OwnerQuest->IsLocalControlled();
 	}
 	else
 	{
 		const bool bIsLocalJudgment = IsLocalJudgment();
-		return bIsLocalJudgment && OwnerQuest->IsLocalController();
+		return bIsLocalJudgment && OwnerQuest->IsLocalControlled();
 	}
 }
 
@@ -141,7 +147,7 @@ void FGameQuestElementBase::PostElementActivated()
 {
 	WhenPostElementActivated();
 #if !UE_BUILD_SHIPPING || ALLOW_CONSOLE_IN_SHIPPING
-	if (OwnerQuest->IsLocalController())
+	if (OwnerQuest->IsLocalControlled())
 	{
 		RegisterFinishCommand();
 		RefreshConsoleCommand();
@@ -152,7 +158,7 @@ void FGameQuestElementBase::PostElementActivated()
 void FGameQuestElementBase::PreElementDeactivated()
 {
 #if !UE_BUILD_SHIPPING || ALLOW_CONSOLE_IN_SHIPPING
-	if (OwnerQuest->IsLocalController())
+	if (OwnerQuest->IsLocalControlled())
 	{
 		UnregisterFinishCommand();
 		RefreshConsoleCommand();

@@ -5,11 +5,9 @@
 #include "CoreMinimal.h"
 #include "GameQuestType.h"
 #include "Engine/Blueprint.h"
+#include "Engine/BlueprintGeneratedClass.h"
 #include "GameQuestGraphBlueprint.generated.h"
 
-/**
- *
- */
 UCLASS()
 class GAMEQUESTGRAPH_API UGameQuestGraphBlueprint : public UBlueprint
 {

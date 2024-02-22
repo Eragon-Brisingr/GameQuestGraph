@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameQuestType.h"
 #include "Components/Widget.h"
+#include "Widgets/SCompoundWidget.h"
 #include "GameQuestTreeList.generated.h"
 
 namespace GameQuest
