@@ -16,8 +16,23 @@
 
 1. 在合适的Actor中添加任务的管理组件，例如在PlayerController中添加`GameQuestComponent`
 2. 创建任务图，从DefaultEntry开始添加任务判定条件编写任务流程
-    * 若没有满足需求的判定条件，则继承任务元素自定义判定条件
+    * 搜索`add quest ...`会显示可添加的节点
+    * 序列节点上右键选择`Add Quest Element`页签添加任务元素
+    * 若没有满足需求的判定条件，则继承任务元素基类自定义判定条件
 3. 从`GameQuestComponent`调用`AddQuest`激活编写的任务
+
+### 示例
+
+![任务示例](Docs/QuestExample.png)  
+
+当任务激活时（DefaultEntry）
+
+1. 玩家需到达A点（MoveTo_A）
+2. 当玩家到达A点后，要求玩家到达B点（MoveTo_B）、可选达到C点（MoveTo_C）
+3. 当玩家到达B点后，任务完成
+
+* 运行效果
+  ![运行任务示例](Docs/QuestExampleRuntime.gif)
 
 ## 具体概念
 
@@ -53,7 +68,9 @@ C++可配置GameQuestGraphEditorSettings中的序列类型定制序列属性与�
 #### 组
 
 ![ElementListLogic](Docs/ElementListLogic.png)  
-元素可分为多组，同一组的元素为与逻辑，组之间为或逻辑  
+
+* 元素可分为多组，同一组的元素为与逻辑，组之间为或逻辑
+* 点击元素间的`And`或者`Or`按钮可切换逻辑
 
 #### 可选元素
 
@@ -98,7 +115,7 @@ C++可配置GameQuestGraphEditorSettings中的序列类型定制序列属性与�
 * 为真时任务元素会在`主控端`激活
 * 只有在任务元素在主控端激活的情况下才能向服务器发送元素结束的RPC请求
 
-#### 示例
+#### 任务元素定义示例
 
 ![MoveToExample](Docs/MoveToExample.png)  
 声明了`Area`变量（客户端UI要显示的话可标记网络同步），`OnArrved`完成事件  

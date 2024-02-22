@@ -16,8 +16,23 @@ Expand the blueprint system, add a new game quest graph, which can add multiple 
 
 1. Add the quest management component in the appropriate Actor, such as adding `GameQuestComponent` in PlayerController
 2. Create a quest graph, start from DefaultEntry to add quest judgment conditions and write quest processes
-    * If there is no judgment condition that meets the requirements, inherit the quest element to customize the judgment condition
+    * Searching for `add quest ...` will display nodes that can be added
+    * Right-click on the sequence node and select the `Add Quest Element` tab to add task elements
+    * If there is no judgment condition that meets the requirements, inherit the quest element base class to customize the judgment condition
 3. Activate the written quest from `GameQuestComponent` by calling `AddQuest`
+
+### Example
+
+![QuestExample](Docs/QuestExample.png)  
+
+When quest activated（DefaultEntry）
+
+1. Player should move to point A(MoveTo_A)
+2. When the player reaches point A, the player is required to reach point B (MoveTo_B) and optionally reach point C (MoveTo_C)
+3. When the player reaches point B, quest finished
+
+* Play this quest
+  ![PlayQuest](Docs/QuestExampleRuntime.gif)
 
 ## Specific Concepts
 
@@ -53,7 +68,9 @@ C++ can configure the sequence types in GameQuestGraphEditorSettings to customiz
 #### Group
 
 ![ElementListLogic](Docs/ElementListLogic.png)  
-Elements can be divided into multiple groups, and the elements in the same group are and logic, and the groups are or logic
+
+* Elements can be divided into multiple groups, and the elements in the same group are and logic, and the groups are or logic
+* Clicking the And or Or button between elements can switch the logic
 
 #### Optional Elements
 
@@ -70,18 +87,18 @@ The element is the judgment condition of the quest, and users can expand the ele
 * Blueprint inherits GameQuestElementScriptable
 * C++ inherits GameQuestElementBase
 
-| Overridable Functions       | Description                                                 |
-|------------------------|------------------------------------------------------------|
-| WhenElementActivated   | Triggered when the element is activated, such as binding a delegate |
-| WhenElementDeactivated | Triggered when the element is deactivated, such as unbinding the delegate |
-| WhenTick               | Tick event, triggered only when Tiackable is true |
-| WhenForceFinishElement | Triggered when the element is forcibly completed using the console or debug button, the world state needs to be set to the situation when the quest is completed to prevent Debug from jumping to the quest and causing abnormal world state |
+| Overridable Functions   | Description                                                                                                                                                                                                                                  |
+|-------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| WhenElementActivated    | Triggered when the element is activated, such as binding a delegate                                                                                                                                                                          |
+| WhenElementDeactivated  | Triggered when the element is deactivated, such as unbinding the delegate                                                                                                                                                                    |
+| WhenTick                | Tick event, triggered only when Tiackable is true                                                                                                                                                                                            |
+| WhenForceFinishElement  | Triggered when the element is forcibly completed using the console or debug button, the world state needs to be set to the situation when the quest is completed to prevent Debug from jumping to the quest and causing abnormal world state |
 
-| Functions and Variables       | Description                                                 |
-|----------------------|------------------------------------------------------------|
-| GameQuestFinishEvent | The event name when the quest is completed, the single sequence and branch sequence nodes will have the variable name corresponding to the execution pin |
-| FinishElement        | Set the element to be completed, pass in GameQuestFinishEvent to trigger the corresponding subsequent quests |
-| UnfinishedElement    | Set the element to be unfinished (for example, the scene of collecting items, the player has completed the collection, but the player sells some items and returns to the unfinished state) |
+| Functions and Variables | Description                                                                                                                                                                                 |
+|-------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| GameQuestFinishEvent    | The event name when the quest is completed, the single sequence and branch sequence nodes will have the variable name corresponding to the execution pin                                    |
+| FinishElement           | Set the element to be completed, pass in GameQuestFinishEvent to trigger the corresponding subsequent quests                                                                                |
+| UnfinishedElement       | Set the element to be unfinished (for example, the scene of collecting items, the player has completed the collection, but the player sells some items and returns to the unfinished state) |
 
 > If all C++ quest elements are used, the number of UObject can be greatly reduced. In an ideal case, only one UObject is created for a quest graph
 
@@ -98,7 +115,7 @@ Since there are some situations where the quest judgment can only be calculated 
 * When true, the quest element will be activated on the `autonomous`
 * Only when the quest element is activated on the autonomous can the RPC request for element completion be sent to the server
 
-#### Example
+#### Quest Element Class Example
 
 ![MoveToExample](Docs/MoveToExample.png)  
 Declare the `Area` variable (if the client-side UI needs to be displayed, it can be marked as network synchronization), and the `OnArrved` completion event.
@@ -148,12 +165,12 @@ Debugging supports all blueprint debugging operations and marks the current stat
 * Purple lines represent the association relationship between quest sequences
 * Yellow arrows represent the direction of the quest process
 
-| Node State | Corresponding Color |
-|------------|--------------------|
-| Activated  | Green              |
-| Deactivated | Black             |
-| Completed   | Blue              |
-| Interrupted | Red               |
+| Node State  | Corresponding Color |
+|-------------|---------------------|
+| Activated   | Green               |
+| Deactivated | Black               |
+| Completed   | Blue                |
+| Interrupted | Red                 |
 
 * ![ForceFinishElement](Docs/ForceFinishElement.png)  
 During debugging, right-click the activated node to force completion
