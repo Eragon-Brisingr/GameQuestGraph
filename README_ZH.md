@@ -31,7 +31,7 @@
 2. 当玩家到达A点后，要求玩家到达B点（MoveTo_B）、可选达到C点（MoveTo_C）
 3. 当玩家到达B点后，任务完成
 
-* 运行效果
+* 运行效果  
   ![运行任务示例](Docs/QuestExampleRuntime.gif)
 
 ## 具体概念

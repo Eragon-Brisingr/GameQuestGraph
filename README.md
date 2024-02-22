@@ -31,7 +31,7 @@ When quest activated（DefaultEntry）
 2. When the player reaches point A, the player is required to reach point B (MoveTo_B) and optionally reach point C (MoveTo_C)
 3. When the player reaches point B, quest finished
 
-* Play this quest
+* Play this quest  
   ![PlayQuest](Docs/QuestExampleRuntime.gif)
 
 ## Specific Concepts
