@@ -82,9 +82,9 @@ public:
 
 	UPROPERTY()
 	FString GameQuestNodeName;
-	UPROPERTY(VisibleAnywhere, Category = "Quest")
+	UPROPERTY(VisibleAnywhere, Category = "GameQuest")
 	uint16 NodeId = 0;
-	UPROPERTY(VisibleAnywhere, Category = "Quest", meta = (BaseStruct = "/Script/GameQuestGraph.GameQuestNodeBase", StructTypeConst = true))
+	UPROPERTY(VisibleAnywhere, Category = "GameQuest", meta = (BaseStruct = "/Script/GameQuestGraph.GameQuestNodeBase", StructTypeConst = true))
 	FInstancedStruct StructNodeInstance;
 
 	FORCEINLINE FName GetRefVarName() const { return *(GetRefVarPrefix() + GameQuestNodeName); }

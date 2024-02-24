@@ -6,6 +6,7 @@
 #include "GameQuestType.h"
 #include "Engine/Blueprint.h"
 #include "Engine/BlueprintGeneratedClass.h"
+#include "UObject/Package.h"
 #include "GameQuestGraphBlueprint.generated.h"
 
 UCLASS()

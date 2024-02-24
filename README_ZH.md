@@ -19,7 +19,7 @@
     * 搜索`add quest ...`会显示可添加的节点
     * 序列节点上右键选择`Add Quest Element`页签添加任务元素
     * 若没有满足需求的判定条件，则继承任务元素基类自定义判定条件
-3. 从`GameQuestComponent`调用`AddQuest`激活编写的任务
+3. 调用`ConstructObject`创建该任务实例（注意`Outer`必须为GameQuestComponent），从`GameQuestComponent`调用`AddQuest`添加编写的任务
 
 ### 示例
 
@@ -55,6 +55,7 @@
 2. 列表序列  
 ![ListSequence](Docs/ListSequence.png)  
 可容纳多个判定条件，当列表中的条件满足达成情况时完成
+    > 鼠标中键拖拽可调整列表中元素的位置
 3. 分支序列  
 ![BranchSequence](Docs/BranchSequence.png)  
 列表中的元素满足完成条件后会激活分支，若分支完成进行分支后的序列（分支序列中有选择是否中断其它分支，若不中断其它分支则当其他分支结束后会执行对应分支的后继序列）

@@ -134,12 +134,12 @@ public:
 	UScriptStruct* GetBaseNodeStruct() const override;
 	UScriptStruct* GetNodeStruct() const override;
 
-	UPROPERTY(EditAnywhere, Category = "Quest", meta = (BlueprintBaseOnly))
+	UPROPERTY(EditAnywhere, Category = "GameQuest", meta = (BlueprintBaseOnly))
 	TSubclassOf<UGameQuestGraphBase> SubQuestClass;
-	UPROPERTY(EditAnywhere, Category = "Quest", meta = (GetOptions = GetCustomEntryNames))
+	UPROPERTY(EditAnywhere, Category = "GameQuest", meta = (GetOptions = GetCustomEntryNames))
 	FName CustomEntryName;
 	UFUNCTION()
 	TArray<FString> GetCustomEntryNames();
-	UPROPERTY(EditAnywhere, Category = "Quest", EditFixedSize, meta = (ReadOnlyKeys, DisplayName = "Expose Pins"))
+	UPROPERTY(EditAnywhere, Category = "GameQuest", EditFixedSize, meta = (ReadOnlyKeys, DisplayName = "Expose Pins"))
 	TMap<FName, bool> SubQuestShowPins;
 };

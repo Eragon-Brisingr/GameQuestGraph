@@ -19,7 +19,7 @@ Expand the blueprint system, add a new game quest graph, which can add multiple 
     * Searching for `add quest ...` will display nodes that can be added
     * Right-click on the sequence node and select the `Add Quest Element` tab to add task elements
     * If there is no judgment condition that meets the requirements, inherit the quest element base class to customize the judgment condition
-3. Activate the written quest from `GameQuestComponent` by calling `AddQuest`
+3. Call `ConstructObject` creates an instance of the quest (note that `Outer` must be GameQuestComponent), activate the written quest from `GameQuestComponent` by calling `AddQuest`
 
 ### Example
 
@@ -55,6 +55,7 @@ Can only accommodate one judgment condition, and when the condition finished mea
 2. List sequence  
 ![ListSequence](Docs/ListSequence.png)  
 Can accommodate multiple judgment conditions, and when conditions in the list are finished mean sequence is completed
+    > Middle-click and drag can be used to adjust the position of elements in the list
 3. Branch sequence  
 ![BranchSequence](Docs/BranchSequence.png)  
 The elements in the list will activate branches after meeting the completion conditions. If the branch is completed, the sequence after the branch will be performed (there is a choice in the branch sequence whether to interrupt other branches, if not interrupting other branches, the corresponding successor sequence will be executed after the other branches end)

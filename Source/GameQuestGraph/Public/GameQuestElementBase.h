@@ -7,6 +7,7 @@
 #include "UObject/Object.h"
 #include "GameQuestElementBase.generated.h"
 
+struct IConsoleCommand;
 struct FGameQuestSequenceBase;
 struct FGameQuestSequenceBranch;
 struct FGameQuestElementBranchList;
@@ -29,10 +30,10 @@ public:
 	UPROPERTY(NotReplicated)
 	uint16 Sequence = 0;
 
-	UPROPERTY(BlueprintReadOnly, NotReplicated)
+	UPROPERTY(BlueprintReadOnly, NotReplicated, Category = "GameQuest")
 	uint8 bIsOptional : 1;
 	uint8 bIsActivated : 1;
-	UPROPERTY(BlueprintReadOnly, SaveGame)
+	UPROPERTY(BlueprintReadOnly, SaveGame, Category = "GameQuest")
 	uint8 bIsFinished : 1;
 	bool IsInterrupted() const;
 
@@ -169,10 +170,8 @@ USTRUCT(meta = (Hidden))
 struct GAMEQUESTGRAPH_API FGameQuestElementScript : public FGameQuestElementBase
 {
 	GENERATED_BODY()
-
-	using Super = FGameQuestElementBase;
 public:
-	UPROPERTY(BlueprintReadWrite, SaveGame, Instanced, NotReplicated)
+	UPROPERTY(BlueprintReadWrite, SaveGame, Instanced, NotReplicated, Category = "GameQuest")
 	TObjectPtr<UGameQuestElementScriptable> Instance;
 
 	void WhenQuestInitProperties(const FStructProperty* Property) override;

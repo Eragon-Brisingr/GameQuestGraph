@@ -44,9 +44,9 @@ public:
 
 	FVector2D NodeSize;
 
-	UPROPERTY(EditAnywhere, Category = "Quest")
+	UPROPERTY(EditAnywhere, Category = "GameQuest")
 	uint8 bIsOptional : 1;
-	UPROPERTY(EditAnywhere, Category = "Quest")
+	UPROPERTY(EditAnywhere, Category = "GameQuest")
 	uint8 bAutoDeactivateOtherBranch : 1;
 	UPROPERTY()
 	uint8 bListMode : 1;
@@ -124,8 +124,8 @@ public:
 
 	void InitialByClass(const TSubclassOf<UGameQuestElementScriptable>& Class);
 
-	UPROPERTY(VisibleAnywhere, Instanced)
+	UPROPERTY(VisibleAnywhere, Instanced, Category = "GameQuest")
 	TObjectPtr<UGameQuestElementScriptable> ScriptInstance;
-	UPROPERTY(EditAnywhere, Category=PinOptions, EditFixedSize)
+	UPROPERTY(EditAnywhere, EditFixedSize, Category = "PinOptions")
 	TArray<FOptionalPinFromProperty> ShowPinForScript;
 };

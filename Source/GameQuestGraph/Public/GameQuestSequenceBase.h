@@ -138,13 +138,13 @@ public:
 		, bInterrupted(false)
 	{}
 
-	UPROPERTY(VisibleAnywhere, NotReplicated)
+	UPROPERTY(VisibleAnywhere, NotReplicated, Category = "GameQuest")
 	uint16 Element = 0;
-	UPROPERTY(VisibleAnywhere, NotReplicated)
+	UPROPERTY(VisibleAnywhere, NotReplicated, Category = "GameQuest")
 	uint8 bAutoDeactivateOtherBranch : 1;
-	UPROPERTY(VisibleAnywhere, NotReplicated, SaveGame)
+	UPROPERTY(VisibleAnywhere, NotReplicated, SaveGame, Category = "GameQuest")
 	uint8 bInterrupted : 1;
-	UPROPERTY(VisibleAnywhere, SaveGame)
+	UPROPERTY(VisibleAnywhere, SaveGame, Category = "GameQuest")
 	TArray<uint16> NextSequences;
 };
 
@@ -185,15 +185,15 @@ struct GAMEQUESTGRAPH_API FGameQuestSequenceSubQuestRerouteTag
 {
 	GENERATED_BODY()
 public:
-	UPROPERTY(VisibleAnywhere, SaveGame)
+	UPROPERTY(VisibleAnywhere, SaveGame, Category = "GameQuest")
 	FName TagName;
-	UPROPERTY(VisibleAnywhere, SaveGame)
+	UPROPERTY(VisibleAnywhere, SaveGame, Category = "GameQuest")
 	uint16 PreSubQuestSequence = GameQuest::IdNone;
-	UPROPERTY(VisibleAnywhere, SaveGame)
+	UPROPERTY(VisibleAnywhere, SaveGame, Category = "GameQuest")
 	uint16 PreSubQuestBranch = GameQuest::IdNone;
-	UPROPERTY(VisibleAnywhere, SaveGame)
+	UPROPERTY(VisibleAnywhere, SaveGame, Category = "GameQuest")
 	FName PreRerouteTagName = NAME_None;
-	UPROPERTY(VisibleAnywhere, SaveGame)
+	UPROPERTY(VisibleAnywhere, SaveGame, Category = "GameQuest")
 	TArray<uint16> NextSequences;
 };
 
@@ -210,7 +210,7 @@ public:
 	UPROPERTY(NotReplicated)
 	TSoftClassPtr<UGameQuestGraphBase> SubQuestClass;
 
-	UPROPERTY(BlueprintReadOnly, SaveGame)
+	UPROPERTY(BlueprintReadOnly, SaveGame, Category = "GameQuest")
 	TObjectPtr<UGameQuestGraphBase> SubQuestInstance;
 
 	UPROPERTY()

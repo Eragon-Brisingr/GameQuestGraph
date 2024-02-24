@@ -60,28 +60,28 @@ class GAMEQUESTGRAPH_API UGameQuestTreeList : public UWidget
 {
 	GENERATED_BODY()
 public:
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "GameQuest")
 	TObjectPtr<UGameQuestGraphBase> Quest;
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "GameQuest")
 	void SetQuest(UGameQuestGraphBase* NewQuest);
 
 	// Must Implement GameQuestTreeListElement Interface
-	UPROPERTY(EditAnywhere, meta = (MustImplement = "/Script/GameQuestGraph.GameQuestTreeListElement"))
+	UPROPERTY(EditAnywhere, Category = "GameQuest", meta = (MustImplement = "/Script/GameQuestGraph.GameQuestTreeListElement"))
 	TSubclassOf<UUserWidget> ElementWidget;
 	// Must Implement GameQuestTreeListElementList Interface
-	UPROPERTY(EditAnywhere, meta = (MustImplement = "/Script/GameQuestGraph.GameQuestTreeListElementList"))
+	UPROPERTY(EditAnywhere, Category = "GameQuest", meta = (MustImplement = "/Script/GameQuestGraph.GameQuestTreeListElementList"))
 	TSubclassOf<UUserWidget> ElementListWidget;
 	// Must Implement GameQuestTreeListSequence Interface
-	UPROPERTY(EditAnywhere, meta = (MustImplement = "/Script/GameQuestGraph.GameQuestTreeListSequence"))
+	UPROPERTY(EditAnywhere, Category = "GameQuest", meta = (MustImplement = "/Script/GameQuestGraph.GameQuestTreeListSequence"))
 	TSubclassOf<UUserWidget> SequenceHeader;
 	// Must Implement GameQuestTreeListSubQuest Interface
-	UPROPERTY(EditAnywhere, meta = (MustImplement = "/Script/GameQuestGraph.GameQuestTreeListSubQuest"))
+	UPROPERTY(EditAnywhere, Category = "GameQuest", meta = (MustImplement = "/Script/GameQuestGraph.GameQuestTreeListSubQuest"))
 	TSubclassOf<UUserWidget> SubQuestHeader;
 	// Must Implement GameQuestTreeListRerouteTag Interface
-	UPROPERTY(EditAnywhere, meta = (MustImplement = "/Script/GameQuestGraph.GameQuestTreeListRerouteTag"))
+	UPROPERTY(EditAnywhere, Category = "GameQuest", meta = (MustImplement = "/Script/GameQuestGraph.GameQuestTreeListRerouteTag"))
 	TSubclassOf<UUserWidget> RerouteTagWidget;
 
-	UFUNCTION(BlueprintCallable, Category = "Quest")
+	UFUNCTION(BlueprintCallable, Category = "GameQuest")
 	UWidget* CreateElementWidget(const FGameQuestElementPtr& Element);
 
 	class SGameQuestTreeListUMG;

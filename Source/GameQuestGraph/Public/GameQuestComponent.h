@@ -50,9 +50,9 @@ protected:
 	virtual void WhenPreSequenceActivated(UGameQuestGraphBase* MainQuest, UGameQuestGraphBase* OwnerQuest, FGameQuestSequenceBase* Sequence) { OnPreSequenceActivated.Broadcast(this, MainQuest, OwnerQuest, FGameQuestSequencePtr{ *Sequence }); }
 	virtual void WhenPostSequenceDeactivated(UGameQuestGraphBase* MainQuest, UGameQuestGraphBase* OwnerQuest, FGameQuestSequenceBase* Sequence) { OnPostSequenceDeactivated.Broadcast(this, MainQuest, OwnerQuest, FGameQuestSequencePtr{ *Sequence }); }
 public:
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameQuest")
 	void AddQuest(UGameQuestGraphBase* Quest, bool AutoActivate = true);
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "GameQuest")
 	void RemoveQuest(UGameQuestGraphBase* Quest);
 
 	DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_TwoParams(FOnQuestActivated, UGameQuestComponent, OnQuestActivated, UGameQuestComponent*, QuestComponent, UGameQuestGraphBase*, Quest);

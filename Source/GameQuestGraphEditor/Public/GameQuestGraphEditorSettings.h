@@ -19,23 +19,23 @@ public:
 	FName GetCategoryName() const override { return TEXT("Plugins"); }
 	FName GetSectionName() const override { return TEXT("GameQuestGraphEditorSettings"); }
 
-	UPROPERTY(EditAnywhere, Config)
+	UPROPERTY(EditAnywhere, Config, Category = "GameQuest")
 	TSoftObjectPtr<UScriptStruct> SequenceSingleType;
-	UPROPERTY(EditAnywhere, Config)
+	UPROPERTY(EditAnywhere, Config, Category = "GameQuest")
 	TSoftObjectPtr<UScriptStruct> SequenceListType;
-	UPROPERTY(EditAnywhere, Config)
+	UPROPERTY(EditAnywhere, Config, Category = "GameQuest")
 	TSoftObjectPtr<UScriptStruct> SequenceBranchType;
-	UPROPERTY(EditAnywhere, Config)
+	UPROPERTY(EditAnywhere, Config, Category = "GameQuest")
 	TSoftObjectPtr<UScriptStruct> SequenceSubQuestType;
-	UPROPERTY(EditAnywhere, Config)
+	UPROPERTY(EditAnywhere, Config, Category = "GameQuest")
 	TSoftObjectPtr<UScriptStruct> ElementBranchListType;
-	UPROPERTY(EditAnywhere, Config)
+	UPROPERTY(EditAnywhere, Config, Category = "GameQuest")
 	TSoftObjectPtr<UScriptStruct> ElementScriptType;
 
-	UPROPERTY(EditAnywhere, Config)
+	UPROPERTY(EditAnywhere, Config, Category = "GameQuest")
 	TArray<TSoftObjectPtr<UScriptStruct>> HiddenNativeTypes;
-	UPROPERTY(EditAnywhere, Config)
+	UPROPERTY(EditAnywhere, Config, Category = "GameQuest")
 	TArray<TSoftClassPtr<UObject>> HiddenScriptTypes;
-	UPROPERTY(EditAnywhere, Config, meta = (AllowAbstract))
+	UPROPERTY(EditAnywhere, Config, Category = "GameQuest", meta = (AllowAbstract))
 	TArray<TSoftClassPtr<UGameQuestGraphBase>> HiddenQuestTypes;
 };
